@@ -1,0 +1,320 @@
+/****************************************************************************
+** Meta object code from reading C++ file 'test_challenger_tier5.cpp'
+**
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.4.2)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#include <memory>
+#include <QtCore/qmetatype.h>
+#if !defined(Q_MOC_OUTPUT_REVISION)
+#error "The header file 'test_challenger_tier5.cpp' doesn't include <QObject>."
+#elif Q_MOC_OUTPUT_REVISION != 68
+#error "This file was generated using the moc from 6.4.2. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+#ifndef Q_CONSTINIT
+#define Q_CONSTINIT
+#endif
+
+QT_BEGIN_MOC_NAMESPACE
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
+namespace {
+struct qt_meta_stringdata_TestChallengerTier5_t {
+    uint offsetsAndSizes[54];
+    char stringdata0[20];
+    char stringdata1[13];
+    char stringdata2[1];
+    char stringdata3[16];
+    char stringdata4[33];
+    char stringdata5[31];
+    char stringdata6[35];
+    char stringdata7[28];
+    char stringdata8[32];
+    char stringdata9[28];
+    char stringdata10[42];
+    char stringdata11[47];
+    char stringdata12[45];
+    char stringdata13[53];
+    char stringdata14[25];
+    char stringdata15[28];
+    char stringdata16[43];
+    char stringdata17[43];
+    char stringdata18[42];
+    char stringdata19[40];
+    char stringdata20[33];
+    char stringdata21[39];
+    char stringdata22[44];
+    char stringdata23[41];
+    char stringdata24[38];
+    char stringdata25[44];
+    char stringdata26[44];
+};
+#define QT_MOC_LITERAL(ofs, len) \
+    uint(sizeof(qt_meta_stringdata_TestChallengerTier5_t::offsetsAndSizes) + ofs), len 
+Q_CONSTINIT static const qt_meta_stringdata_TestChallengerTier5_t qt_meta_stringdata_TestChallengerTier5 = {
+    {
+        QT_MOC_LITERAL(0, 19),  // "TestChallengerTier5"
+        QT_MOC_LITERAL(20, 12),  // "initTestCase"
+        QT_MOC_LITERAL(33, 0),  // ""
+        QT_MOC_LITERAL(34, 15),  // "cleanupTestCase"
+        QT_MOC_LITERAL(50, 32),  // "testZeroAndNegativeDurationSmpte"
+        QT_MOC_LITERAL(83, 30),  // "testRapidTogglePlayPauseStress"
+        QT_MOC_LITERAL(114, 34),  // "testHighSpeedPlaybackBoundary..."
+        QT_MOC_LITERAL(149, 27),  // "testSubFrameAndExtremeSeeks"
+        QT_MOC_LITERAL(177, 31),  // "testFrameStepStressAtBoundaries"
+        QT_MOC_LITERAL(209, 27),  // "testMpvBackendNullptrSafety"
+        QT_MOC_LITERAL(237, 41),  // "testEqualizerExtremeGainBoost..."
+        QT_MOC_LITERAL(279, 46),  // "testEqualizerBiquadPoleStabil..."
+        QT_MOC_LITERAL(326, 44),  // "testEqualizerHugeBufferAndDen..."
+        QT_MOC_LITERAL(371, 52),  // "testEqualizerConcurrentGainMo..."
+        QT_MOC_LITERAL(424, 24),  // "testEqualizerJsonFuzzing"
+        QT_MOC_LITERAL(449, 27),  // "testCorruptDatabaseRecovery"
+        QT_MOC_LITERAL(477, 42),  // "testSqliteWalConcurrentMultit..."
+        QT_MOC_LITERAL(520, 42),  // "testLongPlaylistReorderingTen..."
+        QT_MOC_LITERAL(563, 41),  // "testStatePersistenceInvalidWi..."
+        QT_MOC_LITERAL(605, 39),  // "testStatePersistenceCorruptJs..."
+        QT_MOC_LITERAL(645, 32),  // "testMPRIS2InvalidMethodArguments"
+        QT_MOC_LITERAL(678, 38),  // "testMPRIS2RateAndVolumeExtrem..."
+        QT_MOC_LITERAL(717, 43),  // "testMPRIS2MetadataWithUnicode..."
+        QT_MOC_LITERAL(761, 40),  // "testMPRIS2RapidPropertyNotifi..."
+        QT_MOC_LITERAL(802, 37),  // "testCliParserOutOfRangeVolume..."
+        QT_MOC_LITERAL(840, 43),  // "testCliParserConflictingFlags..."
+        QT_MOC_LITERAL(884, 43)   // "testCliParserSpecialUrlsAndUn..."
+    },
+    "TestChallengerTier5",
+    "initTestCase",
+    "",
+    "cleanupTestCase",
+    "testZeroAndNegativeDurationSmpte",
+    "testRapidTogglePlayPauseStress",
+    "testHighSpeedPlaybackBoundaryRates",
+    "testSubFrameAndExtremeSeeks",
+    "testFrameStepStressAtBoundaries",
+    "testMpvBackendNullptrSafety",
+    "testEqualizerExtremeGainBoostsAndClamping",
+    "testEqualizerBiquadPoleStabilityAcrossAllBands",
+    "testEqualizerHugeBufferAndDenormalProcessing",
+    "testEqualizerConcurrentGainModulationWhileProcessing",
+    "testEqualizerJsonFuzzing",
+    "testCorruptDatabaseRecovery",
+    "testSqliteWalConcurrentMultithreadedAccess",
+    "testLongPlaylistReorderingTenThousandItems",
+    "testStatePersistenceInvalidWindowGeometry",
+    "testStatePersistenceCorruptJsonSettings",
+    "testMPRIS2InvalidMethodArguments",
+    "testMPRIS2RateAndVolumeExtremeClamping",
+    "testMPRIS2MetadataWithUnicodeAndHugeStrings",
+    "testMPRIS2RapidPropertyNotificationStorm",
+    "testCliParserOutOfRangeVolumeAndSpeed",
+    "testCliParserConflictingFlagsAndInvalidArgs",
+    "testCliParserSpecialUrlsAndUnicodeFilenames"
+};
+#undef QT_MOC_LITERAL
+} // unnamed namespace
+
+Q_CONSTINIT static const uint qt_meta_data_TestChallengerTier5[] = {
+
+ // content:
+      10,       // revision
+       0,       // classname
+       0,    0, // classinfo
+      25,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+ // slots: name, argc, parameters, tag, flags, initial metatype offsets
+       1,    0,  164,    2, 0x08,    1 /* Private */,
+       3,    0,  165,    2, 0x08,    2 /* Private */,
+       4,    0,  166,    2, 0x08,    3 /* Private */,
+       5,    0,  167,    2, 0x08,    4 /* Private */,
+       6,    0,  168,    2, 0x08,    5 /* Private */,
+       7,    0,  169,    2, 0x08,    6 /* Private */,
+       8,    0,  170,    2, 0x08,    7 /* Private */,
+       9,    0,  171,    2, 0x08,    8 /* Private */,
+      10,    0,  172,    2, 0x08,    9 /* Private */,
+      11,    0,  173,    2, 0x08,   10 /* Private */,
+      12,    0,  174,    2, 0x08,   11 /* Private */,
+      13,    0,  175,    2, 0x08,   12 /* Private */,
+      14,    0,  176,    2, 0x08,   13 /* Private */,
+      15,    0,  177,    2, 0x08,   14 /* Private */,
+      16,    0,  178,    2, 0x08,   15 /* Private */,
+      17,    0,  179,    2, 0x08,   16 /* Private */,
+      18,    0,  180,    2, 0x08,   17 /* Private */,
+      19,    0,  181,    2, 0x08,   18 /* Private */,
+      20,    0,  182,    2, 0x08,   19 /* Private */,
+      21,    0,  183,    2, 0x08,   20 /* Private */,
+      22,    0,  184,    2, 0x08,   21 /* Private */,
+      23,    0,  185,    2, 0x08,   22 /* Private */,
+      24,    0,  186,    2, 0x08,   23 /* Private */,
+      25,    0,  187,    2, 0x08,   24 /* Private */,
+      26,    0,  188,    2, 0x08,   25 /* Private */,
+
+ // slots: parameters
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+
+       0        // eod
+};
+
+Q_CONSTINIT const QMetaObject TestChallengerTier5::staticMetaObject = { {
+    QMetaObject::SuperData::link<QObject::staticMetaObject>(),
+    qt_meta_stringdata_TestChallengerTier5.offsetsAndSizes,
+    qt_meta_data_TestChallengerTier5,
+    qt_static_metacall,
+    nullptr,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_TestChallengerTier5_t,
+        // Q_OBJECT / Q_GADGET
+        QtPrivate::TypeAndForceComplete<TestChallengerTier5, std::true_type>,
+        // method 'initTestCase'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'cleanupTestCase'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testZeroAndNegativeDurationSmpte'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testRapidTogglePlayPauseStress'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testHighSpeedPlaybackBoundaryRates'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testSubFrameAndExtremeSeeks'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testFrameStepStressAtBoundaries'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMpvBackendNullptrSafety'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerExtremeGainBoostsAndClamping'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerBiquadPoleStabilityAcrossAllBands'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerHugeBufferAndDenormalProcessing'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerConcurrentGainModulationWhileProcessing'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerJsonFuzzing'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCorruptDatabaseRecovery'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testSqliteWalConcurrentMultithreadedAccess'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testLongPlaylistReorderingTenThousandItems'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistenceInvalidWindowGeometry'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistenceCorruptJsonSettings'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2InvalidMethodArguments'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2RateAndVolumeExtremeClamping'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2MetadataWithUnicodeAndHugeStrings'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2RapidPropertyNotificationStorm'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCliParserOutOfRangeVolumeAndSpeed'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCliParserConflictingFlagsAndInvalidArgs'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCliParserSpecialUrlsAndUnicodeFilenames'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
+    >,
+    nullptr
+} };
+
+void TestChallengerTier5::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        auto *_t = static_cast<TestChallengerTier5 *>(_o);
+        (void)_t;
+        switch (_id) {
+        case 0: _t->initTestCase(); break;
+        case 1: _t->cleanupTestCase(); break;
+        case 2: _t->testZeroAndNegativeDurationSmpte(); break;
+        case 3: _t->testRapidTogglePlayPauseStress(); break;
+        case 4: _t->testHighSpeedPlaybackBoundaryRates(); break;
+        case 5: _t->testSubFrameAndExtremeSeeks(); break;
+        case 6: _t->testFrameStepStressAtBoundaries(); break;
+        case 7: _t->testMpvBackendNullptrSafety(); break;
+        case 8: _t->testEqualizerExtremeGainBoostsAndClamping(); break;
+        case 9: _t->testEqualizerBiquadPoleStabilityAcrossAllBands(); break;
+        case 10: _t->testEqualizerHugeBufferAndDenormalProcessing(); break;
+        case 11: _t->testEqualizerConcurrentGainModulationWhileProcessing(); break;
+        case 12: _t->testEqualizerJsonFuzzing(); break;
+        case 13: _t->testCorruptDatabaseRecovery(); break;
+        case 14: _t->testSqliteWalConcurrentMultithreadedAccess(); break;
+        case 15: _t->testLongPlaylistReorderingTenThousandItems(); break;
+        case 16: _t->testStatePersistenceInvalidWindowGeometry(); break;
+        case 17: _t->testStatePersistenceCorruptJsonSettings(); break;
+        case 18: _t->testMPRIS2InvalidMethodArguments(); break;
+        case 19: _t->testMPRIS2RateAndVolumeExtremeClamping(); break;
+        case 20: _t->testMPRIS2MetadataWithUnicodeAndHugeStrings(); break;
+        case 21: _t->testMPRIS2RapidPropertyNotificationStorm(); break;
+        case 22: _t->testCliParserOutOfRangeVolumeAndSpeed(); break;
+        case 23: _t->testCliParserConflictingFlagsAndInvalidArgs(); break;
+        case 24: _t->testCliParserSpecialUrlsAndUnicodeFilenames(); break;
+        default: ;
+        }
+    }
+    (void)_a;
+}
+
+const QMetaObject *TestChallengerTier5::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *TestChallengerTier5::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_meta_stringdata_TestChallengerTier5.stringdata0))
+        return static_cast<void*>(this);
+    return QObject::qt_metacast(_clname);
+}
+
+int TestChallengerTier5::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QObject::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        if (_id < 25)
+            qt_static_metacall(this, _c, _id, _a);
+        _id -= 25;
+    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+        if (_id < 25)
+            *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
+        _id -= 25;
+    }
+    return _id;
+}
+QT_WARNING_POP
+QT_END_MOC_NAMESPACE

@@ -1,0 +1,344 @@
+/****************************************************************************
+** Meta object code from reading C++ file 'test_m3_m4.cpp'
+**
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.4.2)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#include <memory>
+#include <QtCore/qmetatype.h>
+#if !defined(Q_MOC_OUTPUT_REVISION)
+#error "The header file 'test_m3_m4.cpp' doesn't include <QObject>."
+#elif Q_MOC_OUTPUT_REVISION != 68
+#error "This file was generated using the moc from 6.4.2. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+#ifndef Q_CONSTINIT
+#define Q_CONSTINIT
+#endif
+
+QT_BEGIN_MOC_NAMESPACE
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
+namespace {
+struct qt_meta_stringdata_TestM3M4_t {
+    uint offsetsAndSizes[60];
+    char stringdata0[9];
+    char stringdata1[13];
+    char stringdata2[1];
+    char stringdata3[16];
+    char stringdata4[37];
+    char stringdata5[20];
+    char stringdata6[32];
+    char stringdata7[35];
+    char stringdata8[42];
+    char stringdata9[32];
+    char stringdata10[34];
+    char stringdata11[39];
+    char stringdata12[34];
+    char stringdata13[43];
+    char stringdata14[47];
+    char stringdata15[32];
+    char stringdata16[44];
+    char stringdata17[44];
+    char stringdata18[37];
+    char stringdata19[32];
+    char stringdata20[40];
+    char stringdata21[34];
+    char stringdata22[41];
+    char stringdata23[38];
+    char stringdata24[35];
+    char stringdata25[45];
+    char stringdata26[45];
+    char stringdata27[35];
+    char stringdata28[31];
+    char stringdata29[22];
+};
+#define QT_MOC_LITERAL(ofs, len) \
+    uint(sizeof(qt_meta_stringdata_TestM3M4_t::offsetsAndSizes) + ofs), len 
+Q_CONSTINIT static const qt_meta_stringdata_TestM3M4_t qt_meta_stringdata_TestM3M4 = {
+    {
+        QT_MOC_LITERAL(0, 8),  // "TestM3M4"
+        QT_MOC_LITERAL(9, 12),  // "initTestCase"
+        QT_MOC_LITERAL(22, 0),  // ""
+        QT_MOC_LITERAL(23, 15),  // "cleanupTestCase"
+        QT_MOC_LITERAL(39, 36),  // "testDatabaseInitializationAnd..."
+        QT_MOC_LITERAL(76, 19),  // "testAppSettingsCrud"
+        QT_MOC_LITERAL(96, 31),  // "testMediaHistoryUpsertAndResume"
+        QT_MOC_LITERAL(128, 34),  // "testPlaylistItemsCrudAndReord..."
+        QT_MOC_LITERAL(163, 41),  // "testEqualizerPresetsCrudAndFa..."
+        QT_MOC_LITERAL(205, 31),  // "testStatePersistenceWindowState"
+        QT_MOC_LITERAL(237, 33),  // "testStatePersistenceAudioSett..."
+        QT_MOC_LITERAL(271, 38),  // "testStatePersistenceUIModeAnd..."
+        QT_MOC_LITERAL(310, 33),  // "testStatePersistencePlaylistQ..."
+        QT_MOC_LITERAL(344, 42),  // "testPlaylistManagerFileAndDir..."
+        QT_MOC_LITERAL(387, 46),  // "testPlaylistManagerQueueNavig..."
+        QT_MOC_LITERAL(434, 31),  // "testPlaylistManagerShuffleOrder"
+        QT_MOC_LITERAL(466, 43),  // "testPlaylistManagerItemReorde..."
+        QT_MOC_LITERAL(510, 43),  // "testCommandLineParserPosition..."
+        QT_MOC_LITERAL(554, 36),  // "testCommandLineParserAudioPar..."
+        QT_MOC_LITERAL(591, 31),  // "testCommandLineParserIpcActions"
+        QT_MOC_LITERAL(623, 39),  // "testCommandLineParserDiagnost..."
+        QT_MOC_LITERAL(663, 33),  // "testMPRIS2RootInterfaceProper..."
+        QT_MOC_LITERAL(697, 40),  // "testMPRIS2PlayerPlaybackState..."
+        QT_MOC_LITERAL(738, 37),  // "testMPRIS2PlayerVolumeAndRate..."
+        QT_MOC_LITERAL(776, 34),  // "testMPRIS2PlayerMicrosecondSe..."
+        QT_MOC_LITERAL(811, 44),  // "testMPRIS2PlayerMetadataDicti..."
+        QT_MOC_LITERAL(856, 44),  // "testMPRIS2DBusServiceRegistra..."
+        QT_MOC_LITERAL(901, 34),  // "testDesktopEntryFileSpecCompl..."
+        QT_MOC_LITERAL(936, 30),  // "testSvgIconValidXmlAndBranding"
+        QT_MOC_LITERAL(967, 21)   // "testPngIconFilesExist"
+    },
+    "TestM3M4",
+    "initTestCase",
+    "",
+    "cleanupTestCase",
+    "testDatabaseInitializationAndWalMode",
+    "testAppSettingsCrud",
+    "testMediaHistoryUpsertAndResume",
+    "testPlaylistItemsCrudAndReordering",
+    "testEqualizerPresetsCrudAndFactorySeeding",
+    "testStatePersistenceWindowState",
+    "testStatePersistenceAudioSettings",
+    "testStatePersistenceUIModeAndTelemetry",
+    "testStatePersistencePlaylistQueue",
+    "testPlaylistManagerFileAndDirectoryLoading",
+    "testPlaylistManagerQueueNavigationAndLoopModes",
+    "testPlaylistManagerShuffleOrder",
+    "testPlaylistManagerItemReorderingAndRemoval",
+    "testCommandLineParserPositionalAndModeFlags",
+    "testCommandLineParserAudioParameters",
+    "testCommandLineParserIpcActions",
+    "testCommandLineParserDiagnosticsAndInfo",
+    "testMPRIS2RootInterfaceProperties",
+    "testMPRIS2PlayerPlaybackStateTransitions",
+    "testMPRIS2PlayerVolumeAndRateClamping",
+    "testMPRIS2PlayerMicrosecondSeeking",
+    "testMPRIS2PlayerMetadataDictionaryFormatting",
+    "testMPRIS2DBusServiceRegistrationAndFallback",
+    "testDesktopEntryFileSpecCompliance",
+    "testSvgIconValidXmlAndBranding",
+    "testPngIconFilesExist"
+};
+#undef QT_MOC_LITERAL
+} // unnamed namespace
+
+Q_CONSTINIT static const uint qt_meta_data_TestM3M4[] = {
+
+ // content:
+      10,       // revision
+       0,       // classname
+       0,    0, // classinfo
+      28,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+ // slots: name, argc, parameters, tag, flags, initial metatype offsets
+       1,    0,  182,    2, 0x08,    1 /* Private */,
+       3,    0,  183,    2, 0x08,    2 /* Private */,
+       4,    0,  184,    2, 0x08,    3 /* Private */,
+       5,    0,  185,    2, 0x08,    4 /* Private */,
+       6,    0,  186,    2, 0x08,    5 /* Private */,
+       7,    0,  187,    2, 0x08,    6 /* Private */,
+       8,    0,  188,    2, 0x08,    7 /* Private */,
+       9,    0,  189,    2, 0x08,    8 /* Private */,
+      10,    0,  190,    2, 0x08,    9 /* Private */,
+      11,    0,  191,    2, 0x08,   10 /* Private */,
+      12,    0,  192,    2, 0x08,   11 /* Private */,
+      13,    0,  193,    2, 0x08,   12 /* Private */,
+      14,    0,  194,    2, 0x08,   13 /* Private */,
+      15,    0,  195,    2, 0x08,   14 /* Private */,
+      16,    0,  196,    2, 0x08,   15 /* Private */,
+      17,    0,  197,    2, 0x08,   16 /* Private */,
+      18,    0,  198,    2, 0x08,   17 /* Private */,
+      19,    0,  199,    2, 0x08,   18 /* Private */,
+      20,    0,  200,    2, 0x08,   19 /* Private */,
+      21,    0,  201,    2, 0x08,   20 /* Private */,
+      22,    0,  202,    2, 0x08,   21 /* Private */,
+      23,    0,  203,    2, 0x08,   22 /* Private */,
+      24,    0,  204,    2, 0x08,   23 /* Private */,
+      25,    0,  205,    2, 0x08,   24 /* Private */,
+      26,    0,  206,    2, 0x08,   25 /* Private */,
+      27,    0,  207,    2, 0x08,   26 /* Private */,
+      28,    0,  208,    2, 0x08,   27 /* Private */,
+      29,    0,  209,    2, 0x08,   28 /* Private */,
+
+ // slots: parameters
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+
+       0        // eod
+};
+
+Q_CONSTINIT const QMetaObject TestM3M4::staticMetaObject = { {
+    QMetaObject::SuperData::link<QObject::staticMetaObject>(),
+    qt_meta_stringdata_TestM3M4.offsetsAndSizes,
+    qt_meta_data_TestM3M4,
+    qt_static_metacall,
+    nullptr,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_TestM3M4_t,
+        // Q_OBJECT / Q_GADGET
+        QtPrivate::TypeAndForceComplete<TestM3M4, std::true_type>,
+        // method 'initTestCase'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'cleanupTestCase'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testDatabaseInitializationAndWalMode'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testAppSettingsCrud'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMediaHistoryUpsertAndResume'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPlaylistItemsCrudAndReordering'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testEqualizerPresetsCrudAndFactorySeeding'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistenceWindowState'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistenceAudioSettings'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistenceUIModeAndTelemetry'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testStatePersistencePlaylistQueue'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPlaylistManagerFileAndDirectoryLoading'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPlaylistManagerQueueNavigationAndLoopModes'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPlaylistManagerShuffleOrder'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPlaylistManagerItemReorderingAndRemoval'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCommandLineParserPositionalAndModeFlags'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCommandLineParserAudioParameters'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCommandLineParserIpcActions'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testCommandLineParserDiagnosticsAndInfo'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2RootInterfaceProperties'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2PlayerPlaybackStateTransitions'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2PlayerVolumeAndRateClamping'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2PlayerMicrosecondSeeking'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2PlayerMetadataDictionaryFormatting'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testMPRIS2DBusServiceRegistrationAndFallback'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testDesktopEntryFileSpecCompliance'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testSvgIconValidXmlAndBranding'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'testPngIconFilesExist'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
+    >,
+    nullptr
+} };
+
+void TestM3M4::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        auto *_t = static_cast<TestM3M4 *>(_o);
+        (void)_t;
+        switch (_id) {
+        case 0: _t->initTestCase(); break;
+        case 1: _t->cleanupTestCase(); break;
+        case 2: _t->testDatabaseInitializationAndWalMode(); break;
+        case 3: _t->testAppSettingsCrud(); break;
+        case 4: _t->testMediaHistoryUpsertAndResume(); break;
+        case 5: _t->testPlaylistItemsCrudAndReordering(); break;
+        case 6: _t->testEqualizerPresetsCrudAndFactorySeeding(); break;
+        case 7: _t->testStatePersistenceWindowState(); break;
+        case 8: _t->testStatePersistenceAudioSettings(); break;
+        case 9: _t->testStatePersistenceUIModeAndTelemetry(); break;
+        case 10: _t->testStatePersistencePlaylistQueue(); break;
+        case 11: _t->testPlaylistManagerFileAndDirectoryLoading(); break;
+        case 12: _t->testPlaylistManagerQueueNavigationAndLoopModes(); break;
+        case 13: _t->testPlaylistManagerShuffleOrder(); break;
+        case 14: _t->testPlaylistManagerItemReorderingAndRemoval(); break;
+        case 15: _t->testCommandLineParserPositionalAndModeFlags(); break;
+        case 16: _t->testCommandLineParserAudioParameters(); break;
+        case 17: _t->testCommandLineParserIpcActions(); break;
+        case 18: _t->testCommandLineParserDiagnosticsAndInfo(); break;
+        case 19: _t->testMPRIS2RootInterfaceProperties(); break;
+        case 20: _t->testMPRIS2PlayerPlaybackStateTransitions(); break;
+        case 21: _t->testMPRIS2PlayerVolumeAndRateClamping(); break;
+        case 22: _t->testMPRIS2PlayerMicrosecondSeeking(); break;
+        case 23: _t->testMPRIS2PlayerMetadataDictionaryFormatting(); break;
+        case 24: _t->testMPRIS2DBusServiceRegistrationAndFallback(); break;
+        case 25: _t->testDesktopEntryFileSpecCompliance(); break;
+        case 26: _t->testSvgIconValidXmlAndBranding(); break;
+        case 27: _t->testPngIconFilesExist(); break;
+        default: ;
+        }
+    }
+    (void)_a;
+}
+
+const QMetaObject *TestM3M4::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *TestM3M4::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_meta_stringdata_TestM3M4.stringdata0))
+        return static_cast<void*>(this);
+    return QObject::qt_metacast(_clname);
+}
+
+int TestM3M4::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QObject::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        if (_id < 28)
+            qt_static_metacall(this, _c, _id, _a);
+        _id -= 28;
+    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+        if (_id < 28)
+            *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
+        _id -= 28;
+    }
+    return _id;
+}
+QT_WARNING_POP
+QT_END_MOC_NAMESPACE

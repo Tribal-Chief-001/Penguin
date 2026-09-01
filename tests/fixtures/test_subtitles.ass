@@ -1,0 +1,14 @@
+[Script Info]
+Title: Penguin ASS Test
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,JetBrains Mono,48,&H0000FFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,2,2,10,10,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.10,0:00:01.50,Default,,0,0,0,,{\b1}STUDIO PRECISION MONITORING{\b0}
+Dialogue: 0,0:00:01.60,0:00:02.90,Default,,0,0,0,,{\c&H00FFCC&}SIGNAL LIME 0.0dB PEAK{\c}
