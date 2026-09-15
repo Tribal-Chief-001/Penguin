@@ -93,6 +93,21 @@ QRect TickScrubberWidget::trackRect() const
     return QRect(leftMargin, 0, w, height());
 }
 
+qint64 TickScrubberWidget::applyMagneticSnap(int x, qint64 rawMs) const
+{
+    m_snappedChapterIndex = -1;
+    m_isMagneticSnapped = false;
+    for (int i = 0; i < m_chapters.size(); ++i) {
+        int cx = positionMsToX(m_chapters[i].timestampMs);
+        if (std::abs(x - cx) <= 12) {
+            m_snappedChapterIndex = i;
+            m_isMagneticSnapped = true;
+            return m_chapters[i].timestampMs;
+        }
+    }
+    return rawMs;
+}
+
 qint64 TickScrubberWidget::xToPositionMs(int x) const
 {
     QRect tr = trackRect();
@@ -116,12 +131,12 @@ int TickScrubberWidget::positionMsToX(qint64 ms) const
 void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
 {
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, false);
+    p.setRenderHint(QPainter::Antialiasing, true);
 
     // 1. Background
     p.fillRect(rect(), BrutalistTheme::BG_DEEP_OBSIDIAN);
 
-    // 2. Top and Bottom structural border lines
+    // 2. Top and Bottom structural lines
     p.setPen(QPen(BrutalistTheme::GRID_STRUCTURAL_BORDER, 1));
     p.drawLine(0, 0, width(), 0);
     p.drawLine(0, height() - 1, width(), height() - 1);
@@ -133,9 +148,15 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
     QString elapsedStr = Core::TimecodeFormatter::formatTimecode(m_positionMs, m_fps, m_dropFrame);
     QString remainingStr = Core::TimecodeFormatter::formatRemaining(m_positionMs, m_durationMs, m_fps, m_dropFrame);
 
-    // Left elapsed time
+    int centerY = height() / 2;
+
+    // Left elapsed time with pulsing live dot
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor("#CCFF00"));
+    p.drawEllipse(QPoint(12, centerY), 3, 3);
+
     p.setPen(BrutalistTheme::TEXT_HIGH_CONTRAST);
-    QRect leftTextRect(8, 0, 96, height());
+    QRect leftTextRect(20, 0, 84, height());
     p.drawText(leftTextRect, Qt::AlignVCenter | Qt::AlignLeft, elapsedStr);
 
     // Right remaining time
@@ -145,39 +166,63 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
 
     // 4. Track Region
     QRect tr = trackRect();
-    int centerY = height() / 2;
 
-    // Track baseline
-    p.setPen(QPen(BrutalistTheme::GRID_STRUCTURAL_BORDER, 1));
-    p.drawLine(tr.left(), centerY, tr.right(), centerY);
+    // Recessed track channel groove
+    QRect trackChannel(tr.left(), centerY - 3, tr.width(), 6);
+    p.setPen(QPen(QColor("#1C1C26"), 1));
+    p.setBrush(QColor("#0B0B10"));
+    p.drawRoundedRect(trackChannel, 3, 3);
 
-    // Played progress bar highlight
+    // Played progress bar highlight with glowing gradient
     int playheadX = positionMsToX(m_positionMs);
     if (playheadX > tr.left()) {
-        p.setPen(QPen(QColor("#FF4400"), 2));
-        p.drawLine(tr.left(), centerY, playheadX, centerY);
+        int playedW = playheadX - tr.left();
+        QRect playedBar(tr.left(), centerY - 3, playedW, 6);
+
+        QLinearGradient grad(tr.left(), 0, playheadX, 0);
+        grad.setColorAt(0.0, QColor("#FF3300"));
+        grad.setColorAt(1.0, QColor("#FF7700"));
+        p.setPen(Qt::NoPen);
+        p.setBrush(grad);
+        p.drawRoundedRect(playedBar, 3, 3);
+
+        // Ambient subtle glow bloom
+        QLinearGradient glowGrad(tr.left(), 0, playheadX, 0);
+        glowGrad.setColorAt(0.0, QColor(255, 51, 0, 30));
+        glowGrad.setColorAt(1.0, QColor(255, 119, 0, 80));
+        p.setBrush(glowGrad);
+        p.drawRoundedRect(playedBar.adjusted(0, -1, 1, 1), 3, 3);
     }
 
     // 5. Graduation Ticks (Mechanical Ruler)
-    int tickSpacing = 16; // Pixels per minor tick
+    int tickSpacing = 16;
     int numTicks = tr.width() / tickSpacing;
     for (int i = 0; i <= numTicks; ++i) {
         int tx = tr.left() + i * tickSpacing;
         if (tx > tr.right()) break;
 
         bool isMajor = (i % 5 == 0);
-        int tickHeight = isMajor ? 12 : 6;
-        QColor tickColor = isMajor ? BrutalistTheme::TEXT_SECONDARY_DIM : QColor("#2A2A35");
+        int tickHeight = isMajor ? 12 : 5;
+        QColor tickColor = isMajor ? BrutalistTheme::TEXT_SECONDARY_DIM : QColor("#2A2A38");
 
         p.setPen(QPen(tickColor, 1));
         p.drawLine(tx, centerY - tickHeight / 2, tx, centerY + tickHeight / 2);
     }
 
-    // 6. Chapter Markers (Solid Cyan Diamonds)
+    // 6. Chapter Markers (Solid Cyan Diamonds with Magnetic Aura)
     if (m_durationMs > 0) {
-        p.setRenderHint(QPainter::Antialiasing, true);
-        for (const auto &chap : m_chapters) {
+        for (int i = 0; i < m_chapters.size(); ++i) {
+            const auto &chap = m_chapters[i];
             int cx = positionMsToX(chap.timestampMs);
+            bool isSnapped = (i == m_snappedChapterIndex);
+
+            if (isSnapped) {
+                // Magnetic glowing aura ring
+                p.setPen(QPen(QColor(0, 229, 255, 160), 1));
+                p.setBrush(QColor(0, 229, 255, 45));
+                p.drawEllipse(QPoint(cx, centerY), 8, 8);
+            }
+
             QPainterPath diamond;
             diamond.moveTo(cx, centerY - 6);
             diamond.lineTo(cx + 4, centerY);
@@ -185,21 +230,49 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
             diamond.lineTo(cx - 4, centerY);
             diamond.closeSubpath();
 
-            p.fillPath(diamond, BrutalistTheme::ACCENT_TELEMETRY_CYAN);
-            p.setPen(QPen(QColor("#0088AA"), 1));
+            p.setPen(QPen(isSnapped ? QColor("#FFFFFF") : QColor("#0088AA"), 1));
+            p.setBrush(isSnapped ? QColor("#00FFFF") : BrutalistTheme::ACCENT_TELEMETRY_CYAN);
             p.drawPath(diamond);
         }
-        p.setRenderHint(QPainter::Antialiasing, false);
     }
 
-    // 7. Hover Indicator (Subtle needle & timestamp)
+    // 7. Hover Indicator & Floating SMPTE Badge
     if (m_isHovered && !m_isDragging && m_durationMs > 0 && m_hoverX >= tr.left() && m_hoverX <= tr.right()) {
+        int effectiveX = m_isMagneticSnapped && m_snappedChapterIndex >= 0
+            ? positionMsToX(m_chapters[m_snappedChapterIndex].timestampMs)
+            : m_hoverX;
+
         p.setPen(QPen(QColor("#00E5FF"), 1, Qt::DashLine));
-        p.drawLine(m_hoverX, 4, m_hoverX, height() - 4);
+        p.drawLine(effectiveX, 4, effectiveX, height() - 4);
+
+        // Floating hover badge
+        qint64 hoverMs = xToPositionMs(effectiveX);
+        QString badgeText = Core::TimecodeFormatter::formatTimecode(hoverMs, m_fps, m_dropFrame);
+        if (m_isMagneticSnapped && m_snappedChapterIndex >= 0 && m_snappedChapterIndex < m_chapters.size()) {
+            badgeText += " • " + m_chapters[m_snappedChapterIndex].title;
+        }
+
+        QFont badgeFont = BrutalistTheme::monospaceFont(7, QFont::Bold);
+        QFontMetrics fm(badgeFont);
+        int badgeW = fm.horizontalAdvance(badgeText) + 12;
+        int badgeH = 16;
+        int badgeX = std::max(tr.left(), std::min(effectiveX - badgeW / 2, tr.right() - badgeW));
+        int badgeY = 2;
+
+        QRect badgeRect(badgeX, badgeY, badgeW, badgeH);
+        p.setPen(QPen(QColor(0, 229, 255, 140), 1));
+        p.setBrush(QColor(11, 11, 16, 230));
+        p.drawRoundedRect(badgeRect, 3, 3);
+
+        p.setFont(badgeFont);
+        p.setPen(QColor("#00E5FF"));
+        p.drawText(badgeRect, Qt::AlignCenter, badgeText);
     }
 
-    // 8. Playhead Needle (Safety Orange #FF4400 with Top Flag)
-    p.setRenderHint(QPainter::Antialiasing, true);
+    // 8. Playhead Needle (Safety Orange with Laser Glow and Pip)
+    p.setPen(QPen(QColor(255, 68, 0, 75), 4));
+    p.drawLine(playheadX, 2, playheadX, height() - 2);
+
     p.setPen(QPen(BrutalistTheme::ACCENT_SAFETY_ORANGE, 2));
     p.drawLine(playheadX, 2, playheadX, height() - 2);
 
@@ -209,7 +282,13 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
     flag.lineTo(playheadX + 4, 1);
     flag.lineTo(playheadX, 7);
     flag.closeSubpath();
-    p.fillPath(flag, BrutalistTheme::ACCENT_SAFETY_ORANGE);
+    p.setPen(Qt::NoPen);
+    p.setBrush(BrutalistTheme::ACCENT_SAFETY_ORANGE);
+    p.drawPath(flag);
+
+    // Center micro-pip
+    p.setBrush(QColor("#FFFFFF"));
+    p.drawEllipse(QPoint(playheadX, centerY), 2, 2);
 }
 
 void TickScrubberWidget::mousePressEvent(QMouseEvent *event)
@@ -222,7 +301,8 @@ void TickScrubberWidget::mousePressEvent(QMouseEvent *event)
         }
         m_isDragging = true;
         emit scrubbingStarted();
-        qint64 targetMs = xToPositionMs(event->pos().x());
+        qint64 rawMs = xToPositionMs(event->pos().x());
+        qint64 targetMs = applyMagneticSnap(event->pos().x(), rawMs);
         m_positionMs = targetMs;
         emit positionChanged(m_positionMs);
         emit seekRequested(targetMs);
@@ -237,20 +317,22 @@ void TickScrubberWidget::mouseMoveEvent(QMouseEvent *event)
 
     QRect tr = trackRect();
     if (m_isDragging) {
-        qint64 targetMs = xToPositionMs(event->pos().x());
+        qint64 rawMs = xToPositionMs(event->pos().x());
+        qint64 targetMs = applyMagneticSnap(event->pos().x(), rawMs);
         m_positionMs = targetMs;
         emit positionChanged(m_positionMs);
         emit seekRequested(targetMs);
         update();
     } else if (tr.contains(event->pos()) && m_durationMs > 0) {
-        qint64 hoverMs = xToPositionMs(event->pos().x());
+        qint64 rawMs = xToPositionMs(event->pos().x());
+        qint64 hoverMs = applyMagneticSnap(event->pos().x(), rawMs);
         emit hoverPositionChanged(hoverMs);
 
         // Check if hovering near chapter marker
         QString tooltipText = Core::TimecodeFormatter::formatTimecode(hoverMs, m_fps, m_dropFrame);
         for (const auto &chap : m_chapters) {
             int cx = positionMsToX(chap.timestampMs);
-            if (std::abs(event->pos().x() - cx) <= 6) {
+            if (std::abs(event->pos().x() - cx) <= 10) {
                 tooltipText = QString("[%1] %2 (%3)")
                     .arg(Core::TimecodeFormatter::formatTimecode(chap.timestampMs, m_fps, m_dropFrame))
                     .arg(chap.title)

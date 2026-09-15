@@ -26,6 +26,15 @@ public:
     static const QColor ACCENT_TELEMETRY_CYAN;  // #00E5FF
     static const QColor ACCENT_CLIP_RED;        // #FF2200
 
+    // Monolithic Kinetic Precision & Smoked Glass Tokens
+    static const QColor GLASS_SMOKED_OBSIDIAN;   // rgba(7, 7, 9, 215)
+    static const QColor GLASS_PANEL_TRANSLUCENT; // rgba(14, 14, 20, 220)
+    static const QColor GLASS_BORDER_SUBTLE;     // rgba(255, 255, 255, 24)
+    static const QColor GLASS_BORDER_GLOW;       // rgba(0, 229, 255, 75)
+    static const QColor GLOW_LASER_ORANGE;       // rgba(255, 68, 0, 80)
+    static const QColor GLOW_LASER_LIME;         // rgba(204, 255, 0, 80)
+    static const QColor GLOW_LASER_CYAN;         // rgba(0, 229, 255, 90)
+
     // Typography
     static QFont monospaceFont(int pointSize = 10, QFont::Weight weight = QFont::Normal);
     static QFont sansFont(int pointSize = 10, QFont::Weight weight = QFont::Normal);
@@ -37,6 +46,11 @@ public:
     static QString accentLimeButtonStyleSheet();
     static QString panelStyleSheet();
     static QString tableStyleSheet();
+    static QString pillButtonStyleSheet();
+    static QString transportDockPillStyleSheet();
+    static QString floatingHeaderStyleSheet();
+    static QString searchInputStyleSheet();
+    static QString videoEqualizerDialogStyleSheet();
 
     // Theme initialization
     static void applyTheme(QApplication *app);

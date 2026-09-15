@@ -177,6 +177,30 @@ class MechanicalTickScrubber:
         ratio = float(clamped_x - self.track_left) / float(self.track_width)
         return int(ratio * self._duration_ms)
 
+    def apply_magnetic_snap(self, raw_pos_ms: int, snap_distance_px: int = 8) -> Tuple[int, Optional[ChapterMarker]]:
+        """
+        Applies magnetic chapter snapping ballistics. If raw_pos_ms is within snap_distance_px
+        of any chapter marker, locks onto that chapter position and returns (snapped_ms, marker).
+        """
+        if not self._chapters or self.track_width <= 0 or self._duration_ms <= 0:
+            return raw_pos_ms, None
+
+        raw_x = self.position_to_x(raw_pos_ms)
+        closest_marker = None
+        min_dist = float("inf")
+
+        for chap in self._chapters:
+            chap_x = self.position_to_x(chap.timestamp_ms)
+            dist = abs(chap_x - raw_x)
+            if dist < min_dist:
+                min_dist = dist
+                closest_marker = chap
+
+        if closest_marker and min_dist <= snap_distance_px:
+            return closest_marker.timestamp_ms, closest_marker
+
+        return raw_pos_ms, None
+
     # SMPTE Readouts
     def elapsed_smpte(self) -> str:
         """Returns elapsed SMPTE timecode (HH:MM:SS:FF)."""

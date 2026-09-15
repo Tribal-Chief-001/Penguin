@@ -86,15 +86,32 @@ void DiagnosticsHUDWidget::paintEvent(QPaintEvent * /*event*/)
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
 
-    // Semi-transparent Obsidian HUD background
+    // Smoked glass HUD card with micro-radii
     QRect bgRect = rect().adjusted(0, 0, -1, -1);
-    p.fillRect(bgRect, QColor(7, 7, 9, 215));
-    p.setPen(QPen(BrutalistTheme::GRID_STRUCTURAL_BORDER, 1));
-    p.drawRect(bgRect);
+    p.setPen(QPen(QColor(0, 229, 255, 60), 1));
+    p.setBrush(QColor(8, 8, 14, 225));
+    p.drawRoundedRect(bgRect, 6, 6);
 
-    // Top accent indicator line
-    p.setPen(QPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN, 2));
-    p.drawLine(bgRect.left() + 2, bgRect.top() + 2, bgRect.left() + 20, bgRect.top() + 2);
+    // Optical corner brackets (ARRI/RED cinema camera style)
+    int blen = 8;
+    p.setPen(QPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN, 1.5));
+    // Top-left
+    p.drawLine(bgRect.left() + 2, bgRect.top() + 2 + blen, bgRect.left() + 2, bgRect.top() + 2);
+    p.drawLine(bgRect.left() + 2, bgRect.top() + 2, bgRect.left() + 2 + blen, bgRect.top() + 2);
+    // Top-right
+    p.drawLine(bgRect.right() - 2 - blen, bgRect.top() + 2, bgRect.right() - 2, bgRect.top() + 2);
+    p.drawLine(bgRect.right() - 2, bgRect.top() + 2, bgRect.right() - 2, bgRect.top() + 2 + blen);
+    // Bottom-left
+    p.drawLine(bgRect.left() + 2, bgRect.bottom() - 2 - blen, bgRect.left() + 2, bgRect.bottom() - 2);
+    p.drawLine(bgRect.left() + 2, bgRect.bottom() - 2, bgRect.left() + 2 + blen, bgRect.bottom() - 2);
+    // Bottom-right
+    p.drawLine(bgRect.right() - 2 - blen, bgRect.bottom() - 2, bgRect.right() - 2, bgRect.bottom() - 2);
+    p.drawLine(bgRect.right() - 2, bgRect.bottom() - 2 - blen, bgRect.right() - 2, bgRect.bottom() - 2);
+
+    // Glowing laser accent dot & line
+    p.setPen(Qt::NoPen);
+    p.setBrush(BrutalistTheme::ACCENT_TELEMETRY_CYAN);
+    p.drawEllipse(QPoint(bgRect.left() + 14, bgRect.top() + 14), 2, 2);
 
     p.setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
 

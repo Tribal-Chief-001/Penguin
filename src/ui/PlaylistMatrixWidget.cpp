@@ -30,21 +30,21 @@ void PlaylistMatrixWidget::setupUI()
     topBar->setSpacing(6);
 
     m_filterEdit = new QLineEdit(this);
-    m_filterEdit->setPlaceholderText("FILTER MATRIX...");
+    m_filterEdit->setPlaceholderText("SEARCH TRACK, ARTIST, ALBUM...");
     m_filterEdit->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
-    m_filterEdit->setStyleSheet("background-color: #0B0B0E; border: 1px solid #1E1E24; color: #FFFFFF; padding: 3px 6px;");
+    m_filterEdit->setStyleSheet(BrutalistTheme::searchInputStyleSheet());
     connect(m_filterEdit, &QLineEdit::textChanged, this, &PlaylistMatrixWidget::onFilterTextChanged);
     topBar->addWidget(m_filterEdit, 1);
 
     m_removeBtn = new QPushButton("REMOVE", this);
     m_removeBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-    m_removeBtn->setStyleSheet(BrutalistTheme::primaryButtonStyleSheet());
+    m_removeBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_removeBtn, &QPushButton::clicked, this, &PlaylistMatrixWidget::onRemoveClicked);
     topBar->addWidget(m_removeBtn);
 
     m_clearBtn = new QPushButton("CLEAR", this);
     m_clearBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-    m_clearBtn->setStyleSheet(BrutalistTheme::primaryButtonStyleSheet());
+    m_clearBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_clearBtn, &QPushButton::clicked, this, &PlaylistMatrixWidget::onClearClicked);
     topBar->addWidget(m_clearBtn);
 
@@ -253,20 +253,26 @@ void PlaylistMatrixWidget::updateRowHighlight()
             if (!cell) continue;
 
             if (isActive) {
-                cell->setBackground(QColor("#1E1E24"));
+                cell->setBackground(QColor(18, 32, 22, 220));
                 if (c == 0) {
-                    cell->setText(QString("►%1").arg(r + 1, 2, 10, QChar('0')));
+                    cell->setText(QString("ılı %1").arg(r + 1, 2, 10, QChar('0')));
                     cell->setForeground(BrutalistTheme::ACCENT_SIGNAL_LIME);
                 } else if (c == 1) {
                     cell->setForeground(BrutalistTheme::ACCENT_SIGNAL_LIME);
+                } else {
+                    cell->setForeground(QColor("#DDFF88"));
                 }
             } else {
-                cell->setBackground(BrutalistTheme::BG_DEEP_OBSIDIAN);
+                cell->setBackground(r % 2 == 0 ? QColor("#08080C") : QColor("#0B0B10"));
                 if (c == 0) {
                     cell->setText(QString("%1").arg(r + 1, 2, 10, QChar('0')));
                     cell->setForeground(BrutalistTheme::TEXT_SECONDARY_DIM);
                 } else if (c == 1) {
                     cell->setForeground(BrutalistTheme::TEXT_HIGH_CONTRAST);
+                } else if (c == 5) {
+                    cell->setForeground(BrutalistTheme::ACCENT_TELEMETRY_CYAN);
+                } else {
+                    cell->setForeground(BrutalistTheme::TEXT_SECONDARY_DIM);
                 }
             }
         }

@@ -19,6 +19,15 @@ const QColor BrutalistTheme::ACCENT_SIGNAL_LIME     = QColor("#CCFF00");
 const QColor BrutalistTheme::ACCENT_TELEMETRY_CYAN  = QColor("#00E5FF");
 const QColor BrutalistTheme::ACCENT_CLIP_RED        = QColor("#FF2200");
 
+// Smoked Glass & Laser Glows
+const QColor BrutalistTheme::GLASS_SMOKED_OBSIDIAN   = QColor(7, 7, 9, 215);
+const QColor BrutalistTheme::GLASS_PANEL_TRANSLUCENT = QColor(14, 14, 20, 220);
+const QColor BrutalistTheme::GLASS_BORDER_SUBTLE     = QColor(255, 255, 255, 24);
+const QColor BrutalistTheme::GLASS_BORDER_GLOW       = QColor(0, 229, 255, 75);
+const QColor BrutalistTheme::GLOW_LASER_ORANGE       = QColor(255, 68, 0, 80);
+const QColor BrutalistTheme::GLOW_LASER_LIME         = QColor(204, 255, 0, 80);
+const QColor BrutalistTheme::GLOW_LASER_CYAN         = QColor(0, 229, 255, 90);
+
 QFont BrutalistTheme::monospaceFont(int pointSize, QFont::Weight weight)
 {
     QStringList families = {"JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono", "Monospace", "Courier New"};
@@ -281,12 +290,14 @@ QString BrutalistTheme::primaryButtonStyleSheet()
             background-color: #0B0B0E;
             color: #FFFFFF;
             border: 1px solid #1E1E24;
+            border-radius: 4px;
             padding: 5px 12px;
             font-weight: bold;
         }
         QPushButton:hover {
             background-color: #141418;
             border: 1px solid #333342;
+            color: #00E5FF;
         }
         QPushButton:pressed {
             background-color: #1E1E24;
@@ -303,6 +314,7 @@ QString BrutalistTheme::accentOrangeButtonStyleSheet()
             background-color: #FF4400;
             color: #070709;
             border: 1px solid #FF4400;
+            border-radius: 4px;
             padding: 5px 12px;
             font-weight: bold;
         }
@@ -325,6 +337,7 @@ QString BrutalistTheme::accentLimeButtonStyleSheet()
             background-color: #CCFF00;
             color: #070709;
             border: 1px solid #CCFF00;
+            border-radius: 4px;
             padding: 5px 12px;
             font-weight: bold;
         }
@@ -345,6 +358,7 @@ QString BrutalistTheme::panelStyleSheet()
     return QString(R"(
         background-color: #0B0B0E;
         border: 1px solid #1E1E24;
+        border-radius: 6px;
     )");
 }
 
@@ -356,8 +370,102 @@ QString BrutalistTheme::tableStyleSheet()
             color: #FFFFFF;
             gridline-color: #1E1E24;
             border: 1px solid #1E1E24;
+            border-radius: 4px;
             selection-background-color: #141418;
             selection-color: #CCFF00;
+        }
+        QHeaderView::section {
+            background-color: #0B0B0E;
+            color: #777788;
+            border: none;
+            border-right: 1px solid #1E1E24;
+            border-bottom: 1px solid #1E1E24;
+            padding: 5px 8px;
+            font-weight: bold;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+        }
+    )");
+}
+
+QString BrutalistTheme::pillButtonStyleSheet()
+{
+    return QString(R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(26, 26, 34, 0.9), stop:1 rgba(14, 14, 20, 0.95));
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(36, 36, 48, 0.95), stop:1 rgba(20, 20, 28, 0.98));
+            border: 1px solid rgba(0, 229, 255, 0.6);
+            color: #00E5FF;
+        }
+        QPushButton:pressed {
+            background: #FF4400;
+            border: 1px solid #FF4400;
+            color: #070709;
+        }
+        QPushButton:checked {
+            background: rgba(255, 68, 0, 0.25);
+            border: 1px solid #FF4400;
+            color: #FF4400;
+        }
+    )");
+}
+
+QString BrutalistTheme::transportDockPillStyleSheet()
+{
+    return QString(R"(
+        QWidget#TransportDock {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(20, 20, 28, 0.92), stop:1 rgba(10, 10, 14, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+        }
+    )");
+}
+
+QString BrutalistTheme::floatingHeaderStyleSheet()
+{
+    return QString(R"(
+        QWidget#FloatingHeader {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(18, 18, 24, 0.90), stop:1 rgba(10, 10, 14, 0.94));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+    )");
+}
+
+QString BrutalistTheme::searchInputStyleSheet()
+{
+    return QString(R"(
+        QLineEdit {
+            background-color: rgba(16, 16, 22, 0.85);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 13px;
+            padding: 4px 12px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        QLineEdit:focus {
+            border: 1px solid #00E5FF;
+            background-color: rgba(20, 20, 28, 0.95);
+        }
+    )");
+}
+
+QString BrutalistTheme::videoEqualizerDialogStyleSheet()
+{
+    return QString(R"(
+        QDialog {
+            background-color: #0B0B0E;
+            border: 1px solid #1E1E24;
+            border-radius: 8px;
         }
     )");
 }

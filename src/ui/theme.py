@@ -28,6 +28,15 @@ ACCENT_SIGNAL_LIME = "#CCFF00"      # Audio mode, active VU LEDs, active lyrics,
 ACCENT_TELEMETRY_CYAN = "#00E5FF"   # Safe reticles, chapter diamonds, OSD HUD, audio badge
 ACCENT_CLIP_RED = "#FF2200"         # VU meter clipping (>0 dB), CLIP alert badge
 
+# Monolithic Kinetic Precision & Smoked Glass Tokens
+GLASS_SMOKED_OBSIDIAN = "rgba(7, 7, 9, 0.85)"
+GLASS_PANEL_TRANSLUCENT = "rgba(14, 14, 20, 0.88)"
+GLASS_BORDER_SUBTLE = "rgba(255, 255, 255, 0.08)"
+GLASS_BORDER_GLOW = "rgba(0, 229, 255, 0.30)"
+GLOW_LASER_ORANGE = "rgba(255, 68, 0, 0.30)"
+GLOW_LASER_LIME = "rgba(204, 255, 0, 0.30)"
+GLOW_LASER_CYAN = "rgba(0, 229, 255, 0.35)"
+
 # Typography Font Stacks
 MONOSPACE_FONT_FAMILY = "JetBrains Mono, DejaVu Sans Mono, Liberation Mono, Monospace, Courier New"
 SANS_FONT_FAMILY = "Inter, Liberation Sans, DejaVu Sans, Helvetica Neue, Segoe UI, sans-serif"
@@ -48,6 +57,14 @@ class BrutalistTheme:
     ACCENT_SIGNAL_LIME = ACCENT_SIGNAL_LIME
     ACCENT_TELEMETRY_CYAN = ACCENT_TELEMETRY_CYAN
     ACCENT_CLIP_RED = ACCENT_CLIP_RED
+
+    GLASS_SMOKED_OBSIDIAN = GLASS_SMOKED_OBSIDIAN
+    GLASS_PANEL_TRANSLUCENT = GLASS_PANEL_TRANSLUCENT
+    GLASS_BORDER_SUBTLE = GLASS_BORDER_SUBTLE
+    GLASS_BORDER_GLOW = GLASS_BORDER_GLOW
+    GLOW_LASER_ORANGE = GLOW_LASER_ORANGE
+    GLOW_LASER_LIME = GLOW_LASER_LIME
+    GLOW_LASER_CYAN = GLOW_LASER_CYAN
 
     MONOSPACE_FONTS = ["JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono", "Monospace", "Courier New"]
     SANS_FONTS = ["Inter", "Liberation Sans", "DejaVu Sans", "Helvetica Neue", "Segoe UI", "sans-serif"]
@@ -319,3 +336,77 @@ class BrutalistTheme:
             selection-color: {cls.ACCENT_SIGNAL_LIME};
         }}
         """
+
+    @classmethod
+    def pill_button_stylesheet(cls) -> str:
+        return f"""
+        QPushButton {{
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(26, 26, 34, 0.9), stop:1 rgba(14, 14, 20, 0.95));
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-family: {MONOSPACE_FONT_FAMILY};
+            font-weight: bold;
+            font-size: 10px;
+        }}
+        QPushButton:hover {{
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(36, 36, 48, 0.95), stop:1 rgba(20, 20, 28, 0.98));
+            border: 1px solid rgba(0, 229, 255, 0.6);
+            color: #00E5FF;
+        }}
+        QPushButton:pressed {{
+            background: {cls.ACCENT_SAFETY_ORANGE};
+            border: 1px solid {cls.ACCENT_SAFETY_ORANGE};
+            color: {cls.BG_DEEP_OBSIDIAN};
+        }}
+        """
+
+    @classmethod
+    def transport_dock_pill_stylesheet(cls) -> str:
+        return """
+        QWidget#TransportDock {{
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(20, 20, 28, 0.92), stop:1 rgba(10, 10, 14, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+        }}
+        """
+
+    @classmethod
+    def floating_header_stylesheet(cls) -> str:
+        return """
+        QWidget#FloatingHeader {{
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(18, 18, 24, 0.90), stop:1 rgba(10, 10, 14, 0.94));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }}
+        """
+
+    @classmethod
+    def search_input_stylesheet(cls) -> str:
+        return f"""
+        QLineEdit {{
+            background-color: rgba(16, 16, 22, 0.85);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 13px;
+            padding: 4px 12px;
+            font-family: {MONOSPACE_FONT_FAMILY};
+            font-size: 11px;
+        }}
+        QLineEdit:focus {{
+            border: 1px solid {cls.ACCENT_TELEMETRY_CYAN};
+            background-color: rgba(20, 20, 28, 0.95);
+        }}
+        """
+
+    @classmethod
+    def video_equalizer_dialog_stylesheet(cls) -> str:
+        return f"""
+        QDialog {{
+            background-color: {cls.SURFACE_PANEL_BASE};
+            border: 1px solid {cls.GRID_LINE_ACTIVE};
+            border-radius: 8px;
+        }}
+        """
+

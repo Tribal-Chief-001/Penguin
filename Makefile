@@ -763,7 +763,8 @@ AudioDeckWidget.o: src/ui/AudioDeckWidget.cpp src/ui/AudioDeckWidget.h \
 		src/ui/TeleprompterWidget.h \
 		src/ui/PlaylistMatrixWidget.h \
 		src/ui/TickScrubberWidget.h \
-		src/ui/BrutalistTheme.h
+		src/ui/BrutalistTheme.h \
+		src/library/PlaylistManager.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o AudioDeckWidget.o src/ui/AudioDeckWidget.cpp
 
 MainWindow.o: src/ui/MainWindow.cpp src/ui/MainWindow.h \

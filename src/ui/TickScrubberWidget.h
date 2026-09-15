@@ -61,6 +61,7 @@ private:
     qint64 xToPositionMs(int x) const;
     int positionMsToX(qint64 ms) const;
     QRect trackRect() const;
+    qint64 applyMagneticSnap(int x, qint64 rawMs) const;
 
     qint64 m_positionMs = 0;
     qint64 m_durationMs = 0;
@@ -71,6 +72,8 @@ private:
     bool m_isDragging = false;
     bool m_isHovered = false;
     int m_hoverX = 0;
+    mutable int m_snappedChapterIndex = -1;
+    mutable bool m_isMagneticSnapped = false;
 };
 
 } // namespace UI

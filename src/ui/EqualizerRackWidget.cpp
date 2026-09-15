@@ -25,27 +25,28 @@ void EqualizerRackWidget::setupUI()
     auto *headerLayout = new QHBoxLayout();
     headerLayout->setSpacing(8);
 
-    auto *titleLabel = new QLabel("10-BAND EQUALIZER RACK", this);
-    titleLabel->setFont(BrutalistTheme::monospaceFont(9, QFont::Bold));
-    titleLabel->setStyleSheet("color: #FFFFFF; font-weight: bold;");
+    auto *titleLabel = new QLabel("10-BAND ISO GRAPHIC EQUALIZER RACK", this);
+    titleLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    titleLabel->setStyleSheet("color: #FFFFFF; font-weight: bold; letter-spacing: 0.5px;");
     headerLayout->addWidget(titleLabel);
 
     headerLayout->addStretch(1);
 
     auto *presetLabel = new QLabel("PRESET:", this);
-    presetLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    presetLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Bold));
     presetLabel->setStyleSheet("color: #777788;");
     headerLayout->addWidget(presetLabel);
 
     m_presetCombo = new QComboBox(this);
     m_presetCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_presetCombo->setStyleSheet("background-color: #12121A; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 4px; color: #FFFFFF; padding: 3px 8px;");
     m_presetCombo->addItems(Core::EqualizerDSP::availablePresets());
     connect(m_presetCombo, &QComboBox::currentTextChanged, this, &EqualizerRackWidget::onPresetComboActivated);
     headerLayout->addWidget(m_presetCombo);
 
-    m_resetFlatBtn = new QPushButton("RESET FLAT", this);
+    m_resetFlatBtn = new QPushButton("FLAT RESET", this);
     m_resetFlatBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-    m_resetFlatBtn->setStyleSheet(BrutalistTheme::primaryButtonStyleSheet());
+    m_resetFlatBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_resetFlatBtn, &QPushButton::clicked, this, &EqualizerRackWidget::resetFlat);
     headerLayout->addWidget(m_resetFlatBtn);
 
@@ -53,10 +54,31 @@ void EqualizerRackWidget::setupUI()
 
     // 2. Sliders Grid
     auto *rackContainer = new QWidget(this);
-    rackContainer->setStyleSheet("background-color: #0B0B0E; border: 1px solid #1E1E24;");
+    rackContainer->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #101016, stop:1 #08080C); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;");
     auto *rackLayout = new QHBoxLayout(rackContainer);
     rackLayout->setContentsMargins(8, 8, 8, 8);
     rackLayout->setSpacing(4);
+
+    QString faderStyle = R"(
+        QSlider::groove:vertical {
+            width: 4px;
+            background: #14141E;
+            border: 1px solid #22222E;
+            border-radius: 2px;
+        }
+        QSlider::handle:vertical {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #D0D0D8, stop:0.5 #FFFFFF, stop:1 #90909A);
+            border: 1px solid #333342;
+            height: 14px;
+            margin-left: -5px;
+            margin-right: -5px;
+            border-radius: 2px;
+        }
+        QSlider::handle:vertical:hover {
+            background: #CCFF00;
+            border: 1px solid #CCFF00;
+        }
+    )";
 
     for (int i = 0; i < Core::EQ_NUM_BANDS; ++i) {
         auto *colLayout = new QVBoxLayout();
@@ -65,7 +87,7 @@ void EqualizerRackWidget::setupUI()
 
         // Gain Readout Label (e.g. +0.0dB)
         auto *gainLabel = new QLabel("+0.0", this);
-        gainLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Normal));
+        gainLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Bold));
         gainLabel->setStyleSheet("color: #777788; border: none; background: transparent;");
         gainLabel->setAlignment(Qt::AlignCenter);
         m_gainLabels[i] = gainLabel;
@@ -81,7 +103,7 @@ void EqualizerRackWidget::setupUI()
         slider->setTickInterval(60);
         slider->setMinimumHeight(90);
         slider->setProperty("bandIndex", i);
-        slider->setStyleSheet("border: none; background: transparent;");
+        slider->setStyleSheet(faderStyle);
         connect(slider, &QSlider::valueChanged, this, &EqualizerRackWidget::onSliderValueChanged);
         m_sliders[i] = slider;
         colLayout->addWidget(slider, 1, Qt::AlignHCenter);
@@ -89,7 +111,7 @@ void EqualizerRackWidget::setupUI()
         // Frequency Label (e.g. 32Hz, 1k)
         auto *freqLabel = new QLabel(Core::EqualizerDSP::bandLabel(i), this);
         freqLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-        freqLabel->setStyleSheet("color: #CCFF00; border: none; background: transparent;");
+        freqLabel->setStyleSheet("color: #00E5FF; border: none; background: transparent;");
         freqLabel->setAlignment(Qt::AlignCenter);
         m_freqLabels[i] = freqLabel;
         colLayout->addWidget(freqLabel);

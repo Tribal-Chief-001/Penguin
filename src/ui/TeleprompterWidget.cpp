@@ -149,13 +149,13 @@ void TeleprompterWidget::paintEvent(QPaintEvent * /*event*/)
     // 1. Background & Border
     p.fillRect(rect(), BrutalistTheme::BG_DEEP_OBSIDIAN);
     p.setPen(QPen(BrutalistTheme::GRID_STRUCTURAL_BORDER, 1));
-    p.drawRect(rect().adjusted(0, 0, -1, -1));
+    p.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 4, 4);
 
     // 2. Empty State
     if (m_cues.isEmpty()) {
-        p.setFont(BrutalistTheme::monospaceFont(9, QFont::Normal));
+        p.setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
         p.setPen(BrutalistTheme::TEXT_MUTED);
-        p.drawText(rect(), Qt::AlignCenter, "SYNCHRONIZED .LRC TELEPROMPTER\n[ NO LYRICS LOADED ]");
+        p.drawText(rect(), Qt::AlignCenter, "SYNCHRONIZED .LRC TELEPROMPTER // FLOATING KINETIC DECK\n[ NO LYRICS LOADED ]");
         return;
     }
 
@@ -164,10 +164,10 @@ void TeleprompterWidget::paintEvent(QPaintEvent * /*event*/)
     int w = width();
     int centerY = h / 2;
 
-    // Draw subtle focus bracket / center guide line
-    p.setPen(QPen(QColor("#1E1E24"), 1, Qt::DotLine));
-    p.drawLine(10, centerY - lineSpacing() / 2, w - 10, centerY - lineSpacing() / 2);
-    p.drawLine(10, centerY + lineSpacing() / 2, w - 10, centerY + lineSpacing() / 2);
+    // Draw subtle focus guide lines
+    p.setPen(QPen(QColor(30, 30, 42, 100), 1, Qt::DotLine));
+    p.drawLine(16, centerY - lineSpacing() / 2, w - 16, centerY - lineSpacing() / 2);
+    p.drawLine(16, centerY + lineSpacing() / 2, w - 16, centerY + lineSpacing() / 2);
 
     for (int i = 0; i < m_cues.size(); ++i) {
         int lineTop = i * lineSpacing() - static_cast<int>(m_scrollOffset);
@@ -176,21 +176,21 @@ void TeleprompterWidget::paintEvent(QPaintEvent * /*event*/)
         // Skip lines outside visible viewport
         if (lineBottom < -20 || lineTop > h + 20) continue;
 
-        QRect lineRect(16, lineTop, w - 32, lineSpacing());
-
         bool isActive = (i == m_activeCueIndex);
         bool isPast = (i < m_activeCueIndex);
         bool isHovered = (i == m_hoveredIndex);
 
-        // Active background highlight row
+        // Active background highlight row with rounded capsule
         if (isActive) {
-            QRect highlightRect(4, lineTop, w - 8, lineSpacing());
-            p.fillRect(highlightRect, QColor(30, 30, 36, 180));
-            p.setPen(QPen(BrutalistTheme::ACCENT_SIGNAL_LIME, 1));
-            p.drawRect(highlightRect);
+            QRect highlightRect(8, lineTop + 2, w - 16, lineSpacing() - 4);
+            p.setPen(QPen(QColor(204, 255, 0, 160), 1));
+            p.setBrush(QColor(204, 255, 0, 22));
+            p.drawRoundedRect(highlightRect, 6, 6);
         } else if (isHovered) {
-            QRect hoverRect(4, lineTop, w - 8, lineSpacing());
-            p.fillRect(hoverRect, QColor(20, 20, 24, 120));
+            QRect hoverRect(8, lineTop + 2, w - 16, lineSpacing() - 4);
+            p.setPen(QPen(QColor(0, 229, 255, 120), 1));
+            p.setBrush(QColor(0, 229, 255, 18));
+            p.drawRoundedRect(hoverRect, 6, 6);
         }
 
         // Timestamp string
@@ -211,30 +211,45 @@ void TeleprompterWidget::paintEvent(QPaintEvent * /*event*/)
         } else {
             p.setPen(BrutalistTheme::TEXT_SECONDARY_DIM);
         }
-        p.drawText(QRect(12, lineTop, 75, lineSpacing()), Qt::AlignVCenter | Qt::AlignLeft, tsStr);
+        p.drawText(QRect(16, lineTop, 75, lineSpacing()), Qt::AlignVCenter | Qt::AlignLeft, tsStr);
 
         // Active Marker arrow
         if (isActive) {
             p.setFont(BrutalistTheme::monospaceFont(9, QFont::Bold));
             p.setPen(BrutalistTheme::ACCENT_SIGNAL_LIME);
-            p.drawText(QRect(88, lineTop, 16, lineSpacing()), Qt::AlignVCenter | Qt::AlignCenter, "►");
+            p.drawText(QRect(92, lineTop, 16, lineSpacing()), Qt::AlignVCenter | Qt::AlignCenter, "►");
+        } else if (isHovered) {
+            p.setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+            p.setPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN);
+            p.drawText(QRect(92, lineTop, 16, lineSpacing()), Qt::AlignVCenter | Qt::AlignCenter, "▶");
         }
 
         // Lyric Text
-        QRect textRect(108, lineTop, w - 120, lineSpacing());
+        QRect textRect(112, lineTop, w - 124, lineSpacing());
         if (isActive) {
-            p.setFont(BrutalistTheme::sansFont(11, QFont::Bold));
+            p.setFont(BrutalistTheme::sansFont(12, QFont::Bold));
             p.setPen(BrutalistTheme::ACCENT_SIGNAL_LIME);
         } else if (isPast) {
             p.setFont(BrutalistTheme::sansFont(9, QFont::Normal));
-            p.setPen(BrutalistTheme::TEXT_MUTED);
+            p.setPen(QColor("#555568"));
         } else {
             p.setFont(BrutalistTheme::sansFont(10, QFont::Normal));
-            p.setPen(BrutalistTheme::TEXT_SECONDARY_DIM);
+            p.setPen(QColor("#9999AA"));
         }
 
         p.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, m_cues[i].text);
     }
+
+    // 4. Atmospheric Vignette Gradients at top and bottom
+    QLinearGradient topVignette(0, 0, 0, 32);
+    topVignette.setColorAt(0.0, QColor(7, 7, 9, 230));
+    topVignette.setColorAt(1.0, QColor(7, 7, 9, 0));
+    p.fillRect(QRect(0, 0, w, 32), topVignette);
+
+    QLinearGradient bottomVignette(0, h - 32, 0, h);
+    bottomVignette.setColorAt(0.0, QColor(7, 7, 9, 0));
+    bottomVignette.setColorAt(1.0, QColor(7, 7, 9, 230));
+    p.fillRect(QRect(0, h - 32, w, 32), bottomVignette);
 }
 
 void TeleprompterWidget::mousePressEvent(QMouseEvent *event)

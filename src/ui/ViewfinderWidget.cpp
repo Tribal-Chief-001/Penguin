@@ -72,33 +72,57 @@ void VideoSurfaceWidget::paintEvent(QPaintEvent * /*event*/)
         // Deep Obsidian canvas
         p.fillRect(rect(), BrutalistTheme::BG_DEEP_OBSIDIAN);
 
-        // Technical background grid when no video
-        p.setPen(QPen(QColor(30, 30, 36, 60), 1));
+        // Architectural lens optical alignment pattern
+        p.setPen(QPen(QColor(30, 30, 42, 70), 1));
         for (int x = 0; x < vw; x += 32) {
             p.drawLine(x, 0, x, vh);
         }
         for (int y = 0; y < vh; y += 32) {
             p.drawLine(0, y, vw, y);
         }
+
+        // Concentric optical calibration rings
+        p.setPen(QPen(QColor(0, 229, 255, 30), 1));
+        p.drawEllipse(QPoint(cx, cy), 80, 80);
+        p.drawEllipse(QPoint(cx, cy), 160, 160);
+        p.drawEllipse(QPoint(cx, cy), 240, 240);
+
+        // Milliradian calibration ticks along optical axes
+        p.setPen(QPen(QColor(0, 229, 255, 60), 1));
+        for (int r = 40; r < vw / 2; r += 40) {
+            p.drawLine(cx + r, cy - 4, cx + r, cy + 4);
+            p.drawLine(cx - r, cy - 4, cx - r, cy + 4);
+            p.drawLine(cx - 4, cy + r, cx + 4, cy + r);
+            p.drawLine(cx - 4, cy - r, cx + 4, cy - r);
+        }
+
+        // Standby optical badge
+        p.setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+        p.setPen(QColor(0, 229, 255, 140));
+        p.drawText(cx - 130, cy + 190, 260, 20, Qt::AlignCenter, "ARRI / RED 4K CINEMA VIEWFINDER");
+        p.setFont(BrutalistTheme::monospaceFont(7, QFont::Normal));
+        p.setPen(QColor(255, 255, 255, 90));
+        p.drawText(cx - 130, cy + 208, 260, 16, Qt::AlignCenter, "SENSOR READY // OPTICAL RETICLES ENGAGED");
     }
 
     // Border around video frame
     p.setPen(QPen(BrutalistTheme::GRID_STRUCTURAL_BORDER, 1));
     p.drawRect(rect().adjusted(0, 0, -1, -1));
 
-    // Safe-Area Reticles
+    // Safe-Area Reticles (ARRI/RED Cinema Standard)
     if (m_showReticles) {
-        // 1. Action-Safe Area (90% boundary: dashed cyan at 40% opacity)
+        // 1. Action-Safe Area (90% boundary: dashed cyan)
         int actionW = static_cast<int>(vw * 0.90);
         int actionH = static_cast<int>(vh * 0.90);
         QRect actionRect(cx - actionW / 2, cy - actionH / 2, actionW, actionH);
 
-        QPen actionPen(QColor(0, 229, 255, 100), 1, Qt::DashLine);
+        QPen actionPen(QColor(0, 229, 255, 110), 1, Qt::DashLine);
         p.setPen(actionPen);
         p.drawRect(actionRect);
 
-        // Action safe corner marks (L-shaped)
-        int cornerLen = 12;
+        // Action safe corner marks (L-shaped optical brackets)
+        int cornerLen = 14;
+        p.setPen(QPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN, 1.5));
         p.drawLine(actionRect.left(), actionRect.top(), actionRect.left() + cornerLen, actionRect.top());
         p.drawLine(actionRect.left(), actionRect.top(), actionRect.left(), actionRect.top() + cornerLen);
         p.drawLine(actionRect.right(), actionRect.top(), actionRect.right() - cornerLen, actionRect.top());
@@ -108,16 +132,26 @@ void VideoSurfaceWidget::paintEvent(QPaintEvent * /*event*/)
         p.drawLine(actionRect.right(), actionRect.bottom(), actionRect.right() - cornerLen, actionRect.bottom());
         p.drawLine(actionRect.right(), actionRect.bottom(), actionRect.right(), actionRect.bottom() - cornerLen);
 
-        // 2. Title-Safe Area (80% boundary: solid cyan at 50% opacity)
+        // 2. Title-Safe Area (80% boundary: solid cyan)
         int titleW = static_cast<int>(vw * 0.80);
         int titleH = static_cast<int>(vh * 0.80);
         QRect titleRect(cx - titleW / 2, cy - titleH / 2, titleW, titleH);
 
-        QPen titlePen(QColor(0, 229, 255, 128), 1, Qt::SolidLine);
+        QPen titlePen(QColor(0, 229, 255, 140), 1, Qt::SolidLine);
         p.setPen(titlePen);
         p.drawRect(titleRect);
 
-        // 3. Center Crosshair (+) with 16px arms
+        // 3. 2.39:1 Anamorphic framing guidelines (horizontal hairlines)
+        int anamorphicH = static_cast<int>(vw / 2.39);
+        if (anamorphicH < vh) {
+            int topCrop = (vh - anamorphicH) / 2;
+            int botCrop = vh - topCrop;
+            p.setPen(QPen(QColor(255, 255, 255, 60), 1, Qt::DashLine));
+            p.drawLine(0, topCrop, vw, topCrop);
+            p.drawLine(0, botCrop, vw, botCrop);
+        }
+
+        // 4. Center Crosshair (+) with 16px arms & targeting ring
         int arm = 16;
         p.setPen(QPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN, 1));
         p.drawLine(cx - arm, cy, cx + arm, cy);
@@ -126,7 +160,7 @@ void VideoSurfaceWidget::paintEvent(QPaintEvent * /*event*/)
 
         // Reticle Labels
         p.setFont(BrutalistTheme::monospaceFont(7, QFont::Normal));
-        p.setPen(QColor(0, 229, 255, 140));
+        p.setPen(QColor(0, 229, 255, 150));
         p.drawText(actionRect.left() + 4, actionRect.top() + 10, "ACTION SAFE 90%");
         p.drawText(titleRect.left() + 4, titleRect.top() + 10, "TITLE SAFE 80%");
     }
@@ -221,15 +255,15 @@ void ViewfinderWidget::setupUI()
 
     // 1. Top Header Bar
     m_headerWidget = new QWidget(this);
-    m_headerWidget->setFixedHeight(32);
-    m_headerWidget->setStyleSheet("background-color: #0B0B0E; border-bottom: 1px solid #1E1E24;");
+    m_headerWidget->setFixedHeight(36);
+    m_headerWidget->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #14141C, stop:1 #08080C); border-bottom: 1px solid rgba(255, 255, 255, 0.08);");
     auto *headerLayout = new QHBoxLayout(m_headerWidget);
-    headerLayout->setContentsMargins(8, 0, 8, 0);
+    headerLayout->setContentsMargins(10, 0, 10, 0);
     headerLayout->setSpacing(8);
 
-    auto *modeTag = new QLabel("[MODE: VIDEO VIEWFINDER]", m_headerWidget);
+    auto *modeTag = new QLabel("● VIEWFINDER // REC", m_headerWidget);
     modeTag->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-    modeTag->setStyleSheet("color: #FF4400; border: none; background: transparent;");
+    modeTag->setStyleSheet("color: #FF4400; border: none; background: transparent; letter-spacing: 0.5px;");
     headerLayout->addWidget(modeTag);
 
     m_titleLabel = new QLabel("NO MEDIA LOADED", m_headerWidget);
@@ -241,6 +275,7 @@ void ViewfinderWidget::setupUI()
     m_reticleToggleBtn->setCheckable(true);
     m_reticleToggleBtn->setChecked(true);
     m_reticleToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_reticleToggleBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_reticleToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::toggleReticles);
     headerLayout->addWidget(m_reticleToggleBtn);
 
@@ -248,11 +283,13 @@ void ViewfinderWidget::setupUI()
     m_osdToggleBtn->setCheckable(true);
     m_osdToggleBtn->setChecked(true);
     m_osdToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_osdToggleBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_osdToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::toggleOsd);
     headerLayout->addWidget(m_osdToggleBtn);
 
     m_fsToggleBtn = new QPushButton("FULLSCREEN [F]", m_headerWidget);
     m_fsToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_fsToggleBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(m_fsToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::fullscreenToggleRequested);
     headerLayout->addWidget(m_fsToggleBtn);
 
@@ -279,8 +316,8 @@ void ViewfinderWidget::setupUI()
 
     // Diagnostics HUD positioned inside viewport container
     m_hud = new DiagnosticsHUDWidget(m_videoSurface);
-    m_hud->move(12, 12);
-    m_hud->resize(360, 100);
+    m_hud->move(14, 14);
+    m_hud->resize(380, 110);
 
     mainLayout->addWidget(viewportContainer, 1);
 
@@ -291,22 +328,24 @@ void ViewfinderWidget::setupUI()
 
     // 4. Tactile Bottom Control Dock
     m_dockWidget = new QWidget(this);
-    m_dockWidget->setFixedHeight(44);
-    m_dockWidget->setStyleSheet("background-color: #0B0B0E; border-top: 1px solid #1E1E24;");
+    m_dockWidget->setFixedHeight(48);
+    m_dockWidget->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #14141C, stop:1 #08080C); border-top: 1px solid rgba(255, 255, 255, 0.10);");
     auto *dockLayout = new QHBoxLayout(m_dockWidget);
-    dockLayout->setContentsMargins(8, 4, 8, 4);
+    dockLayout->setContentsMargins(10, 4, 10, 4);
     dockLayout->setSpacing(6);
 
     // Transport buttons
     m_stepBackBtn = new QPushButton("|< 1F", m_dockWidget);
     m_stepBackBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_stepBackBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_stepBackBtn->setToolTip("Step Backward 1 Frame (,)");
     m_stepBackBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stepBackBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStepBackwardClicked);
     dockLayout->addWidget(m_stepBackBtn);
 
-    m_jumpBackBtn = new QPushButton("-10s", m_dockWidget);
+    m_jumpBackBtn = new QPushButton("↺ 10s", m_dockWidget);
     m_jumpBackBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_jumpBackBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_jumpBackBtn->setToolTip("Jump Backward 10 Seconds (Left Arrow)");
     m_jumpBackBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_jumpBackBtn, &QPushButton::clicked, this, &ViewfinderWidget::onJumpBackwardClicked);
@@ -320,8 +359,9 @@ void ViewfinderWidget::setupUI()
     connect(m_playPauseBtn, &QPushButton::clicked, this, &ViewfinderWidget::onPlayPauseClicked);
     dockLayout->addWidget(m_playPauseBtn);
 
-    m_jumpFwdBtn = new QPushButton("+10s", m_dockWidget);
+    m_jumpFwdBtn = new QPushButton("10s ↻", m_dockWidget);
     m_jumpFwdBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_jumpFwdBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_jumpFwdBtn->setToolTip("Jump Forward 10 Seconds (Right Arrow)");
     m_jumpFwdBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_jumpFwdBtn, &QPushButton::clicked, this, &ViewfinderWidget::onJumpForwardClicked);
@@ -329,20 +369,23 @@ void ViewfinderWidget::setupUI()
 
     m_stepFwdBtn = new QPushButton("1F >|", m_dockWidget);
     m_stepFwdBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_stepFwdBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_stepFwdBtn->setToolTip("Step Forward 1 Frame (.)");
     m_stepFwdBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stepFwdBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStepForwardClicked);
     dockLayout->addWidget(m_stepFwdBtn);
 
-    m_stopBtn = new QPushButton("[] STOP", m_dockWidget);
+    m_stopBtn = new QPushButton("■ STOP", m_dockWidget);
     m_stopBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_stopBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_stopBtn->setToolTip("Stop Playback");
     m_stopBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stopBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStopClicked);
     dockLayout->addWidget(m_stopBtn);
 
-    m_shotBtn = new QPushButton("SHOT", m_dockWidget);
+    m_shotBtn = new QPushButton("📷 SHOT", m_dockWidget);
     m_shotBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_shotBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_shotBtn->setToolTip("Take Forensic Screenshot (S / Shift+S)");
     m_shotBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_shotBtn, &QPushButton::clicked, this, [this]() {
@@ -350,8 +393,9 @@ void ViewfinderWidget::setupUI()
     });
     dockLayout->addWidget(m_shotBtn);
 
-    m_loopBtn = new QPushButton("A-B", m_dockWidget);
+    m_loopBtn = new QPushButton("⟲ A-B", m_dockWidget);
     m_loopBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_loopBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_loopBtn->setToolTip("A-B Looper: Press [ for A, ] for B, \\ to clear");
     m_loopBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_loopBtn, &QPushButton::clicked, this, [this]() {
@@ -368,50 +412,55 @@ void ViewfinderWidget::setupUI()
             }
         } else {
             m_engine->clearLoop();
-            m_loopBtn->setText("A-B");
-            m_loopBtn->setStyleSheet("");
+            m_loopBtn->setText("⟲ A-B");
+            m_loopBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
         }
     });
     dockLayout->addWidget(m_loopBtn);
 
-    m_nightBtn = new QPushButton("NIGHT", m_dockWidget);
+    m_nightBtn = new QPushButton("🌙 NIGHT", m_dockWidget);
     m_nightBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_nightBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     m_nightBtn->setToolTip("Toggle Night Mode Dynamic Dialogue Compressor (N)");
     m_nightBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_nightBtn, &QPushButton::clicked, this, [this]() {
         if (!m_engine) return;
         bool next = !m_engine->isNightMode();
         m_engine->setNightMode(next);
-        m_nightBtn->setStyleSheet(next ? BrutalistTheme::accentLimeButtonStyleSheet() : "");
+        m_nightBtn->setStyleSheet(next ? BrutalistTheme::accentLimeButtonStyleSheet() : BrutalistTheme::pillButtonStyleSheet());
     });
     dockLayout->addWidget(m_nightBtn);
 
-    dockLayout->addSpacing(10);
+    dockLayout->addSpacing(8);
 
     // Speed selector
     auto *speedLabel = new QLabel("RATE:", m_dockWidget);
-    speedLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    speedLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Bold));
     speedLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(speedLabel);
 
+    QString comboStyle = "QComboBox { background-color: #12121A; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 4px; color: #FFFFFF; padding: 2px 6px; font-size: 10px; }";
+
     m_speedCombo = new QComboBox(m_dockWidget);
     m_speedCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_speedCombo->setStyleSheet(comboStyle);
     m_speedCombo->addItems({"0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "1.75x", "2.0x"});
     m_speedCombo->setCurrentText("1.0x");
     m_speedCombo->setFocusPolicy(Qt::NoFocus);
     connect(m_speedCombo, &QComboBox::currentTextChanged, this, &ViewfinderWidget::onSpeedChanged);
     dockLayout->addWidget(m_speedCombo);
 
-    dockLayout->addSpacing(10);
+    dockLayout->addSpacing(6);
 
     // Audio stream selector
     auto *audLabel = new QLabel("AUD:", m_dockWidget);
-    audLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    audLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Bold));
     audLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(audLabel);
 
     m_audioTrackCombo = new QComboBox(m_dockWidget);
     m_audioTrackCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_audioTrackCombo->setStyleSheet(comboStyle);
     m_audioTrackCombo->addItem("Track 1 (Default)", 1);
     m_audioTrackCombo->setFocusPolicy(Qt::NoFocus);
     connect(m_audioTrackCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ViewfinderWidget::onAudioTrackChanged);
@@ -419,12 +468,13 @@ void ViewfinderWidget::setupUI()
 
     // Subtitle stream selector
     auto *subLabel = new QLabel("SUB:", m_dockWidget);
-    subLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    subLabel->setFont(BrutalistTheme::monospaceFont(7, QFont::Bold));
     subLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(subLabel);
 
     m_subTrackCombo = new QComboBox(m_dockWidget);
     m_subTrackCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+    m_subTrackCombo->setStyleSheet(comboStyle);
     m_subTrackCombo->addItem("None", -1);
     m_subTrackCombo->setFocusPolicy(Qt::NoFocus);
     connect(m_subTrackCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ViewfinderWidget::onSubtitleTrackChanged);
@@ -435,7 +485,8 @@ void ViewfinderWidget::setupUI()
     // Volume & Mute
     m_muteBtn = new QPushButton("VOL", m_dockWidget);
     m_muteBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
-    m_muteBtn->setFixedWidth(44);
+    m_muteBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
+    m_muteBtn->setFixedWidth(46);
     m_muteBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_muteBtn, &QPushButton::clicked, this, &ViewfinderWidget::onMuteClicked);
     dockLayout->addWidget(m_muteBtn);
