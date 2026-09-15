@@ -9,6 +9,8 @@
 #include <QSlider>
 #include <QLabel>
 #include <QTimer>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <memory>
 
 #include "PlaybackEngine.h"
@@ -22,7 +24,7 @@ class VideoSurfaceWidget : public QWidget {
     Q_OBJECT
 public:
     explicit VideoSurfaceWidget(QWidget *parent = nullptr);
-    virtual ~VideoSurfaceWidget() = default;
+    virtual ~VideoSurfaceWidget();
 
     void setPlaybackEngine(Core::PlaybackEngine *engine);
     void setReticlesVisible(bool visible) { m_showReticles = visible; update(); }
@@ -34,6 +36,7 @@ signals:
     void clicked();
     void doubleClicked();
     void mouseMoved();
+    void contextMenuRequested(const QPoint &globalPos);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -41,6 +44,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void showEvent(QShowEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
@@ -79,14 +83,18 @@ public slots:
     void setOsdVisible(bool visible);
     void setReticlesVisible(bool visible);
     void updateUIFromEngine();
+    void showContextMenu(const QPoint &globalPos);
 
 signals:
     void switchModeRequested();
     void fullscreenToggleRequested();
+    void openFileRequested();
+    void playPauseRequested();
 
 protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:

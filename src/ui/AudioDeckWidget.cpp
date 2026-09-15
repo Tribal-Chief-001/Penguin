@@ -1,6 +1,7 @@
 #include "AudioDeckWidget.h"
 #include "BrutalistTheme.h"
 #include "PlaylistManager.h"
+#include "MainWindow.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -73,6 +74,17 @@ void KineticDeckVisualizer::mousePressEvent(QMouseEvent *event)
         emit clicked();
     }
     QLabel::mousePressEvent(event);
+}
+
+void KineticDeckVisualizer::contextMenuEvent(QContextMenuEvent *event)
+{
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->showContextMenu(event->globalPos());
+        event->accept();
+        return;
+    }
+    QLabel::contextMenuEvent(event);
 }
 
 void KineticDeckVisualizer::onAnimationTick()
@@ -701,9 +713,41 @@ void AudioDeckWidget::cycleRepeatMode()
 
 void AudioDeckWidget::onPlayPauseClicked()
 {
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->handlePlayPause();
+        return;
+    }
+
+    bool hasMedia = (m_engine && !m_engine->currentUri().trimmed().isEmpty());
+    if (!hasMedia) {
+        emit openFileRequested();
+        return;
+    }
+
     if (m_engine) {
         m_engine->togglePlayPause();
     }
+}
+
+void AudioDeckWidget::showContextMenu(const QPoint &globalPos)
+{
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->showContextMenu(globalPos);
+        return;
+    }
+}
+
+void AudioDeckWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->showContextMenu(event->globalPos());
+        event->accept();
+        return;
+    }
+    QWidget::contextMenuEvent(event);
 }
 
 void AudioDeckWidget::onJumpBackwardClicked()

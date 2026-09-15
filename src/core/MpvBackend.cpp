@@ -1,4 +1,5 @@
 #include "MpvBackend.h"
+#include <QGuiApplication>
 #include <QMetaObject>
 #include <QFileInfo>
 #include <QStandardPaths>
@@ -52,7 +53,10 @@ bool MpvBackend::initialize(bool offscreen)
     mpv_set_option_string(m_mpv, "hwdec", "auto-safe");
     mpv_set_option_string(m_mpv, "volume-max", "100");
 
-    if (offscreen) {
+    bool isOffscreen = offscreen || 
+        (qApp && (QGuiApplication::platformName() == "offscreen" || QGuiApplication::platformName() == "minimal"));
+
+    if (isOffscreen) {
         mpv_set_option_string(m_mpv, "vo", "null");
     } else {
         if (m_wid != 0) {
@@ -149,6 +153,7 @@ bool MpvBackend::loadFile(const QString &uri, bool autoPlay)
 void MpvBackend::play()
 {
     if (!m_mpv) return;
+    if (m_currentUri.trimmed().isEmpty()) return;
     int flag = 0;
     mpv_set_property(m_mpv, "pause", MPV_FORMAT_FLAG, &flag);
     m_isPaused = false;
@@ -160,6 +165,7 @@ void MpvBackend::play()
 void MpvBackend::pause()
 {
     if (!m_mpv) return;
+    if (m_currentUri.trimmed().isEmpty()) return;
     int flag = 1;
     mpv_set_property(m_mpv, "pause", MPV_FORMAT_FLAG, &flag);
     m_isPaused = true;
@@ -168,6 +174,7 @@ void MpvBackend::pause()
 
 void MpvBackend::togglePlayPause()
 {
+    if (m_currentUri.trimmed().isEmpty()) return;
     if (m_isPaused || m_state == EngineState::Paused) {
         play();
     } else {
@@ -964,9 +971,20 @@ static void onRenderUpdate(void *ctx)
 void MpvBackend::setWindowId(int64_t wid)
 {
     m_wid = wid;
-    if (m_mpv && wid != 0) {
+    if (!m_mpv) return;
+
+    if (qApp && (QGuiApplication::platformName() == "offscreen" || QGuiApplication::platformName() == "minimal")) {
+        mpv_set_option_string(m_mpv, "vo", "null");
+        return;
+    }
+
+    if (wid != 0) {
         mpv_set_option(m_mpv, "wid", MPV_FORMAT_INT64, &m_wid);
         mpv_set_option_string(m_mpv, "vo", "gpu,x11,libmpv,null");
+    } else {
+        int64_t zero = 0;
+        mpv_set_option(m_mpv, "wid", MPV_FORMAT_INT64, &zero);
+        mpv_set_option_string(m_mpv, "vo", "null");
     }
 }
 

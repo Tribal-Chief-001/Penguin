@@ -1,5 +1,6 @@
 #include "ViewfinderWidget.h"
 #include "BrutalistTheme.h"
+#include "MainWindow.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -7,6 +8,7 @@
 #include <QPainterPath>
 #include <QFileInfo>
 #include <QMouseEvent>
+#include <QGuiApplication>
 #include <cmath>
 
 namespace Penguin {
@@ -31,6 +33,13 @@ VideoSurfaceWidget::VideoSurfaceWidget(QWidget *parent)
     connect(&m_singleClickTimer, &QTimer::timeout, this, &VideoSurfaceWidget::clicked);
 }
 
+VideoSurfaceWidget::~VideoSurfaceWidget()
+{
+    if (m_engine && m_engine->backend()) {
+        m_engine->setWindowId(0);
+    }
+}
+
 void VideoSurfaceWidget::setPlaybackEngine(Core::PlaybackEngine *engine)
 {
     m_engine = engine;
@@ -39,6 +48,9 @@ void VideoSurfaceWidget::setPlaybackEngine(Core::PlaybackEngine *engine)
 
 void VideoSurfaceWidget::attachWindowId()
 {
+    if (qApp && (QGuiApplication::platformName() == "offscreen" || QGuiApplication::platformName() == "minimal")) {
+        return;
+    }
     if (m_engine && m_engine->backend()) {
         m_engine->setWindowId((int64_t)winId());
     }
@@ -225,6 +237,31 @@ void VideoSurfaceWidget::wheelEvent(QWheelEvent *event)
     }
 
     event->accept();
+}
+
+void VideoSurfaceWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    emit contextMenuRequested(event->globalPos());
+
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->showContextMenu(event->globalPos());
+        event->accept();
+        return;
+    }
+
+    QWidget *p = parentWidget();
+    while (p) {
+        ViewfinderWidget *vf = qobject_cast<ViewfinderWidget*>(p);
+        if (vf) {
+            vf->showContextMenu(event->globalPos());
+            event->accept();
+            return;
+        }
+        p = p->parentWidget();
+    }
+
+    QWidget::contextMenuEvent(event);
 }
 
 // ----------------------------------------------------------------------------
@@ -609,9 +646,89 @@ bool ViewfinderWidget::isReticlesVisible() const
 
 void ViewfinderWidget::onPlayPauseClicked()
 {
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->handlePlayPause();
+        return;
+    }
+
+    bool hasMedia = (m_engine && !m_engine->currentUri().trimmed().isEmpty());
+    if (!hasMedia) {
+        emit openFileRequested();
+        return;
+    }
+
     if (m_engine) {
         m_engine->togglePlayPause();
     }
+}
+
+void ViewfinderWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    showContextMenu(event->globalPos());
+    event->accept();
+}
+
+void ViewfinderWidget::showContextMenu(const QPoint &globalPos)
+{
+    MainWindow *mw = qobject_cast<MainWindow*>(window());
+    if (mw) {
+        mw->showContextMenu(globalPos);
+        return;
+    }
+
+    if (QGuiApplication::platformName() == "offscreen") {
+        return;
+    }
+
+    QMenu menu(this);
+    menu.setStyleSheet(BrutalistTheme::contextMenuStyleSheet());
+
+    // MEDIA
+    QMenu *mediaMenu = menu.addMenu("MEDIA");
+    mediaMenu->setStyleSheet(BrutalistTheme::contextMenuStyleSheet());
+    auto *openFileAct = mediaMenu->addAction("Open File...");
+    openFileAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
+    connect(openFileAct, &QAction::triggered, this, &ViewfinderWidget::openFileRequested);
+
+    // PLAYBACK
+    QMenu *pbMenu = menu.addMenu("PLAYBACK");
+    pbMenu->setStyleSheet(BrutalistTheme::contextMenuStyleSheet());
+    bool isPlaying = (m_engine && m_engine->playbackState() == Core::PlaybackState::Playing);
+    auto *playAction = pbMenu->addAction(isPlaying ? "Pause" : "Play");
+    playAction->setShortcut(QKeySequence(Qt::Key_Space));
+    connect(playAction, &QAction::triggered, this, &ViewfinderWidget::onPlayPauseClicked);
+
+    pbMenu->addSeparator();
+    auto *seekFwd = pbMenu->addAction("Jump Forward (+10s)");
+    connect(seekFwd, &QAction::triggered, this, [this]() { if (m_engine) m_engine->seekRelative(10000); });
+    auto *seekBack = pbMenu->addAction("Jump Backward (-10s)");
+    connect(seekBack, &QAction::triggered, this, [this]() { if (m_engine) m_engine->seekRelative(-10000); });
+    auto *stepFwd = pbMenu->addAction("Single-Frame Step Forward");
+    connect(stepFwd, &QAction::triggered, this, [this]() { if (m_engine) m_engine->frameStep(1); });
+    auto *stepBack = pbMenu->addAction("Single-Frame Step Backward");
+    connect(stepBack, &QAction::triggered, this, [this]() { if (m_engine) m_engine->frameStep(-1); });
+
+    // VIDEO
+    QMenu *vidMenu = menu.addMenu("VIDEO");
+    vidMenu->setStyleSheet(BrutalistTheme::contextMenuStyleSheet());
+    auto *osdAction = vidMenu->addAction("Telemetry OSD HUD");
+    osdAction->setCheckable(true);
+    osdAction->setChecked(isOsdVisible());
+    connect(osdAction, &QAction::triggered, this, &ViewfinderWidget::toggleOsd);
+    auto *retAction = vidMenu->addAction("Safe-Area Reticles");
+    retAction->setCheckable(true);
+    retAction->setChecked(isReticlesVisible());
+    connect(retAction, &QAction::triggered, this, &ViewfinderWidget::toggleReticles);
+    auto *fsAction = vidMenu->addAction("Fullscreen");
+    connect(fsAction, &QAction::triggered, this, &ViewfinderWidget::fullscreenToggleRequested);
+
+    // Direct root action
+    menu.addSeparator();
+    auto *rootPlay = menu.addAction(isPlaying ? "Pause" : "Play");
+    connect(rootPlay, &QAction::triggered, this, &ViewfinderWidget::onPlayPauseClicked);
+
+    menu.exec(globalPos);
 }
 
 void ViewfinderWidget::onStopClicked()

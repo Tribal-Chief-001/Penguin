@@ -261,24 +261,42 @@ QString BrutalistTheme::globalStyleSheet()
         QMenu {
             background-color: #0B0B0E;
             color: #FFFFFF;
-            border: 1px solid #1E1E24;
-            padding: 2px;
-        }
-
-        QMenu::item {
-            padding: 6px 20px 6px 15px;
+            border: 1px solid #2A2A35;
+            padding: 4px;
+            font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace;
             font-size: 11px;
         }
 
+        QMenu::item {
+            background-color: transparent;
+            padding: 6px 24px 6px 20px;
+            color: #E2E2EA;
+            border: 1px solid transparent;
+        }
+
         QMenu::item:selected {
-            background-color: #1E1E24;
+            background-color: #141418;
             color: #CCFF00;
+            border-left: 2px solid #FF4400;
+        }
+
+        QMenu::item:disabled {
+            color: #444455;
         }
 
         QMenu::separator {
             height: 1px;
-            background: #1E1E24;
-            margin: 2px 0px;
+            background-color: #2A2A35;
+            margin: 4px 6px;
+        }
+
+        QMenu::indicator {
+            width: 14px;
+            height: 14px;
+        }
+
+        QMenu::indicator:checked {
+            color: #CCFF00;
         }
     )");
 }
@@ -494,6 +512,52 @@ QString BrutalistTheme::videoEqualizerDialogStyleSheet()
         QSlider::handle:horizontal:hover {
             background: #00E5FF;
             border: 1px solid #00E5FF;
+        }
+    )");
+}
+
+QString BrutalistTheme::contextMenuStyleSheet()
+{
+    return QString(R"(
+        QMenu {
+            background-color: #0B0B0E;
+            color: #FFFFFF;
+            border: 1px solid #2A2A35;
+            padding: 4px;
+            font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+            font-size: 11px;
+        }
+
+        QMenu::item {
+            background-color: transparent;
+            padding: 6px 24px 6px 20px;
+            color: #E2E2EA;
+            border: 1px solid transparent;
+        }
+
+        QMenu::item:selected {
+            background-color: #141418;
+            color: #CCFF00;
+            border-left: 2px solid #FF4400;
+        }
+
+        QMenu::item:disabled {
+            color: #444455;
+        }
+
+        QMenu::separator {
+            height: 1px;
+            background-color: #2A2A35;
+            margin: 4px 6px;
+        }
+
+        QMenu::indicator {
+            width: 14px;
+            height: 14px;
+        }
+
+        QMenu::indicator:checked {
+            color: #CCFF00;
         }
     )");
 }

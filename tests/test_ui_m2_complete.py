@@ -567,6 +567,100 @@ class TestMainWindowOrchestration(unittest.TestCase):
         # Unhandled
         self.assertFalse(win.handle_key_press("UNKNOWN_KEY_XYZ"))
 
+    def test_play_pause_fallback_when_no_media(self):
+        win = MainWindow()
+        self.assertEqual(win._file_dialog_open_count, 0)
+
+        # Pressing space when no media is loaded falls back to open file dialog
+        handled = win.handle_key_press("SPACE")
+        self.assertTrue(handled)
+        self.assertEqual(win._file_dialog_open_count, 1)
+
+        # Calling handle_play_pause directly also falls back
+        win.handle_play_pause()
+        self.assertEqual(win._file_dialog_open_count, 2)
+
+        # Loading media suppresses the open file dialog fallback
+        win.open_media("tests/fixtures/test_audio.flac", auto_play=False)
+        self.assertEqual(win._current_media, "tests/fixtures/test_audio.flac")
+        win.handle_play_pause()
+        self.assertEqual(win._file_dialog_open_count, 2)
+
+    def test_comprehensive_context_menu_structure(self):
+        win = MainWindow()
+        menu = win.create_context_menu()
+        self.assertIsNotNone(menu)
+
+        # Verify Monolithic Brutalist styling tokens
+        style = menu.get("style", {})
+        self.assertEqual(style.get("background"), "#0B0B0E")
+        self.assertEqual(style.get("border"), "1px solid #2A2A35")
+        self.assertEqual(style.get("hover_text"), "#CCFF00")
+        self.assertEqual(style.get("hover_accent"), "#FF4400")
+
+        # Verify all 6 VLC / IINA-grade submenus exist
+        submenus = menu.get("submenus", {})
+        self.assertIn("MEDIA", submenus)
+        self.assertIn("PLAYBACK", submenus)
+        self.assertIn("AUDIO", submenus)
+        self.assertIn("VIDEO", submenus)
+        self.assertIn("SUBTITLES", submenus)
+        self.assertIn("CHAPTERS_AND_BOOKMARKS", submenus)
+
+        # Verify Media submenu items
+        media_labels = [item.get("label") for item in submenus["MEDIA"] if "label" in item]
+        self.assertIn("Open File...", media_labels)
+        self.assertIn("Open Folder...", media_labels)
+        self.assertIn("Open Network Stream URL...", media_labels)
+
+        # Verify Playback submenu items
+        playback_labels = [item.get("label") for item in submenus["PLAYBACK"] if "label" in item]
+        self.assertTrue(any("Play" in lbl for lbl in playback_labels))
+        self.assertIn("Jump Forward (+10s)", playback_labels)
+        self.assertIn("Jump Backward (-10s)", playback_labels)
+        self.assertIn("Single-Frame Step Forward", playback_labels)
+        self.assertIn("Speed", playback_labels)
+        self.assertIn("A-B Repeat Loop", playback_labels)
+
+        # Verify Audio submenu items
+        audio_labels = [item.get("label") for item in submenus["AUDIO"] if "label" in item]
+        self.assertIn("Audio Track", audio_labels)
+        self.assertIn("Volume Up (+5%)", audio_labels)
+        self.assertIn("10-Band Graphic Equalizer...", audio_labels)
+        self.assertIn("Night Mode Dialogue Compressor", audio_labels)
+        self.assertIn("Headphone Spatial Crossfeed (BS2B)", audio_labels)
+        self.assertIn("Pitch Shift", audio_labels)
+
+        # Verify Video submenu items
+        video_labels = [item.get("label") for item in submenus["VIDEO"] if "label" in item]
+        self.assertIn("Aspect Ratio", video_labels)
+        self.assertIn("Video Color Equalizer...", video_labels)
+        self.assertIn("Deband Dithering Filter", video_labels)
+        self.assertIn("Safe-Area Reticles", video_labels)
+        self.assertIn("Telemetry OSD HUD", video_labels)
+        self.assertIn("Fullscreen", video_labels)
+        self.assertIn("Floating Picture-in-Picture", video_labels)
+        self.assertIn("Lossless Screenshot", video_labels)
+
+        # Verify Subtitles submenu items
+        sub_labels = [item.get("label") for item in submenus["SUBTITLES"] if "label" in item]
+        self.assertIn("Primary Subtitle Track", sub_labels)
+        self.assertIn("Secondary Subtitle Track (Dual Learning)", sub_labels)
+        self.assertIn("Load External Subtitle File...", sub_labels)
+        self.assertIn("Subtitle Sync Nudge", sub_labels)
+
+        # Verify Chapters & Bookmarks items
+        cb_labels = [item.get("label") for item in submenus["CHAPTERS_AND_BOOKMARKS"] if "label" in item]
+        self.assertIn("Chapters", cb_labels)
+        self.assertIn("Next Chapter", cb_labels)
+        self.assertIn("Previous Chapter", cb_labels)
+        self.assertIn("Add Bookmark Marker", cb_labels)
+        self.assertIn("Next Bookmark", cb_labels)
+
+        # Verify context_menu_event
+        event_menu = win.context_menu_event()
+        self.assertEqual(event_menu["title"], "PENGUIN_CONTEXT_MENU")
+
 
 if __name__ == "__main__":
     unittest.main()

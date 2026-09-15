@@ -51,6 +51,7 @@ public:
     static QString floatingHeaderStyleSheet();
     static QString searchInputStyleSheet();
     static QString videoEqualizerDialogStyleSheet();
+    static QString contextMenuStyleSheet();
 
     // Theme initialization
     static void applyTheme(QApplication *app);

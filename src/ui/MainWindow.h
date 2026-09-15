@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QStackedWidget>
+#include <QMenu>
+#include <QContextMenuEvent>
 #include <memory>
 
 #include "PlaybackEngine.h"
@@ -27,7 +29,7 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    virtual ~MainWindow() = default;
+    virtual ~MainWindow();
 
     UIMode currentMode() const { return m_currentMode; }
     Core::PlaybackEngine* playbackEngine() const { return m_engine.get(); }
@@ -70,11 +72,16 @@ public slots:
     void nextChapter();
     void previousChapter();
     void openVideoEqualizerDialog();
+    void openAudioEqualizerDialog();
+    void handlePlayPause();
+    void showContextMenu(const QPoint &globalPos);
+    QMenu* createContextMenu(QWidget *parent = nullptr);
     void showOsdMessage(const QString &message, int durationMs = 2500);
 
 protected:
     bool event(QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
@@ -100,6 +107,7 @@ private:
     UIMode m_currentMode = UIMode::VideoViewfinder;
     bool m_isPip = false;
     QRect m_savedGeometry;
+    QString m_currentMedia;
 };
 
 } // namespace UI

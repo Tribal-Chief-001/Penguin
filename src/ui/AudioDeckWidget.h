@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QSplitter>
+#include <QContextMenuEvent>
 
 #include "PlaybackEngine.h"
 #include "VUMeterWidget.h"
@@ -44,6 +45,7 @@ signals:
 protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
     void onAnimationTick();
@@ -90,9 +92,15 @@ public slots:
     void previousTrack();
     void toggleShuffle();
     void cycleRepeatMode();
+    void showContextMenu(const QPoint &globalPos);
 
 signals:
     void switchModeRequested();
+    void openFileRequested();
+    void playPauseRequested();
+
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
     void onPlayPauseClicked();
