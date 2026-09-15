@@ -675,7 +675,10 @@ void TestM1Core::testPlaybackEngineEqualizerIntegration()
 
 void TestM1Core::testPlaybackEngineMediaLoadAndSeek()
 {
-    QString fixture = "/home/lucifer/Documents/Projects/Penguin/tests/fixtures/test_video.mp4";
+    QString fixture = "tests/fixtures/test_video.mp4";
+    if (!QFile::exists(fixture)) {
+        fixture = "../tests/fixtures/test_video.mp4";
+    }
     QVERIFY(QFile::exists(fixture));
 
     PlaybackEngine engine;
@@ -706,7 +709,10 @@ void TestM1Core::testPlaybackEngineMediaLoadAndSeek()
 
 void TestM1Core::testPlaybackEngineSidecarAutoDiscovery()
 {
-    QString audioFixture = "/home/lucifer/Documents/Projects/Penguin/tests/fixtures/test_audio.flac";
+    QString audioFixture = "tests/fixtures/test_audio.flac";
+    if (!QFile::exists(audioFixture)) {
+        audioFixture = "../tests/fixtures/test_audio.flac";
+    }
     QVERIFY(QFile::exists(audioFixture));
 
     PlaybackEngine engine;
