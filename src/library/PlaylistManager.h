@@ -46,6 +46,10 @@ public:
 public slots:
     void setCurrentIndex(int index);
     void addFile(const QString &filePath);
+    void addItem(const UI::PlaylistItem &item);
+    void addItem(const QString &filePath, const QString &title = QString(),
+                 const QString &artist = QString(), const QString &album = QString(),
+                 qint64 durationMs = 0, const QString &format = QString());
     void addFiles(const QStringList &filePaths);
     void addDirectory(const QString &dirPath, bool recursive = true);
     void importMimeData(const QMimeData *mimeData);

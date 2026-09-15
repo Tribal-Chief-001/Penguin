@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
                 QFileInfo fi(file);
                 if (fi.isDir()) {
                     playlistManager.addDirectory(file, true);
-                } else if (fi.isFile()) {
+                } else {
                     playlistManager.addFile(file);
                 }
             }

@@ -1,0 +1,68 @@
+name: Penguin CI
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    name: Build & Verify (Ubuntu 24.04)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            g++ \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            libgl1-mesa-dev \
+            libmpv-dev \
+            libmpv2 \
+            ffmpeg \
+            libasound2-dev \
+            libpulse-dev \
+            sqlite3 \
+            libsqlite3-dev \
+            dbus-x11 \
+            xvfb \
+            python3 \
+            python3-pytest
+
+      - name: Build Penguin (Qt 6 + C++)
+        run: |
+          qmake6 penguin.pro
+          make -j$(nproc)
+
+      - name: Build C++ Test Suites
+        run: |
+          cd tests
+          qmake6 tests.pro || true
+          make -j$(nproc)
+          cd ..
+
+      - name: Run Headless Self-Diagnostics
+        run: |
+          QT_QPA_PLATFORM=offscreen ./penguin --test
+
+      - name: Run C++ Unit Test Binaries
+        run: |
+          QT_QPA_PLATFORM=offscreen ./tests/test_m1_core
+          QT_QPA_PLATFORM=offscreen ./tests/test_m2_ui
+          QT_QPA_PLATFORM=offscreen ./tests/test_m3_m4
+
+      - name: Run Master Verification Harness (347 Tests)
+        run: |
+          ./scripts/run_tests.sh
+
+      - name: Run Python Universal E2E Test Runner (432 Tests)
+        run: |
+          python3 run_tests.py

@@ -37,6 +37,7 @@ public slots:
                  const QString &artist = QString(), const QString &album = QString(),
                  qint64 durationMs = 0, const QString &format = QString());
     void addItems(const QList<PlaylistItem> &items);
+    void setItems(const QList<PlaylistItem> &items, int currentIndex = -1);
     void removeItem(int index);
     void clearPlaylist();
     void setCurrentIndex(int index);
@@ -48,6 +49,9 @@ signals:
     void trackActivated(int index, const PlaylistItem &item);
     void currentIndexChanged(int index);
     void playlistChanged();
+    void itemRemoved(int index);
+    void itemMoved(int fromIndex, int toIndex);
+    void playlistCleared();
 
 private slots:
     void onCellDoubleClicked(int row, int column);

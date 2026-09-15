@@ -1,0 +1,30 @@
+[Desktop Entry]
+Version=1.5
+Type=Application
+Name=Penguin
+GenericName=Media Player
+Comment=Tactile Digital Brutalist Audio & Video Player
+Exec=penguin %U
+Icon=penguin
+Terminal=false
+StartupNotify=true
+StartupWMClass=penguin
+Categories=AudioVideo;Audio;Video;Player;Qt;
+MimeType=audio/mpeg;audio/flac;audio/ogg;audio/opus;audio/x-wav;audio/aac;video/mp4;video/x-matroska;video/webm;video/quicktime;video/x-msvideo;
+Actions=PlayPause;Next;Previous;Stop;
+
+[Desktop Action PlayPause]
+Name=Play/Pause
+Exec=penguin --toggle-pause
+
+[Desktop Action Next]
+Name=Next Track
+Exec=penguin --next
+
+[Desktop Action Previous]
+Name=Previous Track
+Exec=penguin --prev
+
+[Desktop Action Stop]
+Name=Stop Playback
+Exec=penguin --stop

@@ -1,0 +1,49 @@
+# Build artifacts and compiled binaries
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+penguin
+moc_*
+*.moc
+moc_predefs.h
+qrc_*
+ui_*
+Makefile*
+!Makefile.sample
+*.qmake.stash
+.qmake.cache
+.qmake.stash*
+
+# C++ Test binaries
+tests/test_m1_core
+tests/test_m2_ui
+tests/test_m3_m4
+tests/test_challenger_*
+tests/*.o
+tests/moc_*
+tests/test_report.json
+
+# Python caches and virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Agent and temporary files
+.agents/
+scratch/
+*.log

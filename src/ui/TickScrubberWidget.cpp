@@ -215,6 +215,11 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
 void TickScrubberWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
+        QRect tr = trackRect();
+        if (!tr.contains(event->pos())) {
+            event->ignore();
+            return;
+        }
         m_isDragging = true;
         emit scrubbingStarted();
         qint64 targetMs = xToPositionMs(event->pos().x());

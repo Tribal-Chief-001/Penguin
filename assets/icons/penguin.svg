@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#070709"/>
+  <rect x="32" y="32" width="448" height="448" fill="#0B0B0E" stroke="#1E1E24" stroke-width="4"/>
+  <!-- Brutalist Penguin Silhouette with Safety Orange Accent -->
+  <polygon points="256,96 160,320 200,416 312,416 352,320" fill="#FFFFFF"/>
+  <polygon points="256,120 280,180 232,180" fill="#FF4400"/>
+  <circle cx="256" cy="240" r="16" fill="#CCFF00"/>
+  <!-- Technical Reticle Overlay -->
+  <line x1="128" y1="256" x2="384" y2="256" stroke="#00E5FF" stroke-width="2" stroke-dasharray="8,8"/>
+  <line x1="256" y1="128" x2="256" y2="384" stroke="#00E5FF" stroke-width="2" stroke-dasharray="8,8"/>
+</svg>

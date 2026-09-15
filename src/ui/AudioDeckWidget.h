@@ -15,6 +15,10 @@
 #include "TickScrubberWidget.h"
 
 namespace Penguin {
+namespace Library {
+class PlaylistManager;
+}
+
 namespace UI {
 
 enum class RepeatMode {
@@ -32,6 +36,9 @@ public:
 
     void setPlaybackEngine(Core::PlaybackEngine *engine);
     Core::PlaybackEngine* playbackEngine() const { return m_engine; }
+
+    void setPlaylistManager(Library::PlaylistManager *playlistMgr);
+    Library::PlaylistManager* playlistManager() const { return m_playlistMgr; }
 
     VUMeterWidget* vuMeter() const { return m_vuMeter; }
     EqualizerRackWidget* equalizerRack() const { return m_eqRack; }
@@ -107,6 +114,7 @@ private:
 
     RepeatMode m_repeatMode = RepeatMode::Off;
     bool m_shuffleEnabled = false;
+    Library::PlaylistManager *m_playlistMgr = nullptr;
 };
 
 } // namespace UI

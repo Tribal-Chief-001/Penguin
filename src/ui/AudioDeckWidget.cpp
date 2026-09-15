@@ -1,5 +1,6 @@
 #include "AudioDeckWidget.h"
 #include "BrutalistTheme.h"
+#include "PlaylistManager.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -237,6 +238,15 @@ void AudioDeckWidget::setupUI()
     connect(m_playlistMatrix, &PlaylistMatrixWidget::trackDoubleClicked, this, &AudioDeckWidget::onPlaylistTrackDoubleClicked);
     connect(m_playlistMatrix, &PlaylistMatrixWidget::playlistChanged, this, &AudioDeckWidget::updateTrackCounter);
     connect(m_playlistMatrix, &PlaylistMatrixWidget::currentIndexChanged, this, &AudioDeckWidget::updateTrackCounter);
+    connect(m_playlistMatrix, &PlaylistMatrixWidget::itemRemoved, this, [this](int idx) {
+        if (m_playlistMgr) m_playlistMgr->removeItem(idx);
+    });
+    connect(m_playlistMatrix, &PlaylistMatrixWidget::itemMoved, this, [this](int from, int to) {
+        if (m_playlistMgr) m_playlistMgr->moveItem(from, to);
+    });
+    connect(m_playlistMatrix, &PlaylistMatrixWidget::playlistCleared, this, [this]() {
+        if (m_playlistMgr) m_playlistMgr->clear();
+    });
 
     // EQ rack connections to engine
     connect(m_eqRack, &EqualizerRackWidget::bandGainChanged, this, [this](int band, double gain) {
@@ -245,6 +255,49 @@ void AudioDeckWidget::setupUI()
     connect(m_eqRack, &EqualizerRackWidget::presetChanged, this, [this](const QString &preset) {
         if (m_engine) m_engine->setEqualizerPreset(preset);
     });
+}
+
+void AudioDeckWidget::setPlaylistManager(Library::PlaylistManager *playlistMgr)
+{
+    m_playlistMgr = playlistMgr;
+    if (m_playlistMgr) {
+        connect(m_playlistMgr, &Library::PlaylistManager::playlistUpdated, this, [this]() {
+            if (m_playlistMatrix) {
+                m_playlistMatrix->setItems(m_playlistMgr->items(), m_playlistMgr->currentIndex());
+            }
+            updateTrackCounter();
+        });
+        connect(m_playlistMgr, &Library::PlaylistManager::currentTrackChanged, this, [this](int index, const PlaylistItem &) {
+            if (m_playlistMatrix) {
+                m_playlistMatrix->setCurrentIndex(index);
+            }
+            updateTrackCounter();
+        });
+        connect(m_playlistMgr, &Library::PlaylistManager::shuffleChanged, this, [this](bool enabled) {
+            m_shuffleEnabled = enabled;
+            m_shuffleBtn->setText(m_shuffleEnabled ? "SHUFFLE: ON" : "SHUFFLE: OFF");
+            m_shuffleBtn->setStyleSheet(m_shuffleEnabled ? "background-color: #1E1E24; color: #CCFF00; border: 1px solid #CCFF00;" : BrutalistTheme::primaryButtonStyleSheet());
+        });
+        connect(m_playlistMgr, &Library::PlaylistManager::loopModeChanged, this, [this](Library::LoopMode mode) {
+            if (mode == Library::LoopMode::None) {
+                m_repeatMode = RepeatMode::Off;
+                m_repeatBtn->setText("REPEAT: OFF");
+                m_repeatBtn->setStyleSheet(BrutalistTheme::primaryButtonStyleSheet());
+            } else if (mode == Library::LoopMode::Playlist) {
+                m_repeatMode = RepeatMode::RepeatAll;
+                m_repeatBtn->setText("REPEAT: ALL");
+                m_repeatBtn->setStyleSheet("background-color: #1E1E24; color: #CCFF00; border: 1px solid #CCFF00;");
+            } else if (mode == Library::LoopMode::Track) {
+                m_repeatMode = RepeatMode::RepeatOne;
+                m_repeatBtn->setText("REPEAT: ONE");
+                m_repeatBtn->setStyleSheet("background-color: #1E1E24; color: #FF4400; border: 1px solid #FF4400;");
+            }
+        });
+
+        if (m_playlistMatrix) {
+            m_playlistMatrix->setItems(m_playlistMgr->items(), m_playlistMgr->currentIndex());
+        }
+    }
 }
 
 void AudioDeckWidget::setPlaybackEngine(Core::PlaybackEngine *engine)
@@ -302,6 +355,10 @@ void AudioDeckWidget::updateTrackCounter()
 
 void AudioDeckWidget::playTrackAtIndex(int index)
 {
+    if (m_playlistMgr) {
+        m_playlistMgr->setCurrentIndex(index);
+        return;
+    }
     if (index < 0 || index >= m_playlistMatrix->count()) return;
 
     m_playlistMatrix->setCurrentIndex(index);
@@ -313,6 +370,10 @@ void AudioDeckWidget::playTrackAtIndex(int index)
 
 void AudioDeckWidget::nextTrack()
 {
+    if (m_playlistMgr) {
+        m_playlistMgr->next();
+        return;
+    }
     if (m_playlistMatrix->count() == 0) return;
 
     int nextIdx = m_playlistMatrix->currentIndex() + 1;
@@ -328,13 +389,17 @@ void AudioDeckWidget::nextTrack()
 
 void AudioDeckWidget::previousTrack()
 {
-    if (m_playlistMatrix->count() == 0) return;
-
     if (m_engine && m_engine->positionMs() > 3000) {
         // If > 3 seconds into track, restart current track
         m_engine->seek(0);
         return;
     }
+
+    if (m_playlistMgr) {
+        m_playlistMgr->previous();
+        return;
+    }
+    if (m_playlistMatrix->count() == 0) return;
 
     int prevIdx = m_playlistMatrix->currentIndex() - 1;
     if (prevIdx < 0) {
@@ -349,6 +414,10 @@ void AudioDeckWidget::previousTrack()
 
 void AudioDeckWidget::toggleShuffle()
 {
+    if (m_playlistMgr) {
+        m_playlistMgr->toggleShuffle();
+        return;
+    }
     m_shuffleEnabled = !m_shuffleEnabled;
     m_shuffleBtn->setText(m_shuffleEnabled ? "SHUFFLE: ON" : "SHUFFLE: OFF");
     m_shuffleBtn->setStyleSheet(m_shuffleEnabled ? "background-color: #1E1E24; color: #CCFF00; border: 1px solid #CCFF00;" : BrutalistTheme::primaryButtonStyleSheet());
@@ -360,6 +429,10 @@ void AudioDeckWidget::toggleShuffle()
 
 void AudioDeckWidget::cycleRepeatMode()
 {
+    if (m_playlistMgr) {
+        m_playlistMgr->cycleLoopMode();
+        return;
+    }
     if (m_repeatMode == RepeatMode::Off) {
         m_repeatMode = RepeatMode::RepeatAll;
         m_repeatBtn->setText("REPEAT: ALL");
@@ -474,6 +547,10 @@ void AudioDeckWidget::onEngineActiveLyricChanged(int cueIndex, const QString & /
 
 void AudioDeckWidget::onEngineMediaFinished()
 {
+    if (m_playlistMgr) {
+        // Authoritative auto-advance is handled by MainWindow via PlaylistManager::next()
+        return;
+    }
     if (m_repeatMode == RepeatMode::RepeatOne) {
         if (m_engine) {
             m_engine->seek(0);

@@ -114,6 +114,9 @@ public:
     bool isMuted() const { return m_muted; }
 
     void setAudioFilter(const QString &filterString);
+    void setEqualizerFilter(const QString &eqFilter);
+    void updateAudioFilters();
+    QString composeAudioFilterGraph() const;
 
     // Stream & Subtitle Management
     void setAudioTrack(int trackId);
@@ -133,6 +136,77 @@ public:
     const QList<TrackInfo>& videoTracks() const { return m_videoTracks; }
     int selectedAudioTrackId() const { return m_selectedAid; }
     int selectedSubtitleTrackId() const { return m_selectedSid; }
+    int selectedSecondarySubtitleTrackId() const { return m_selectedSecondarySid; }
+    void selectSecondarySubtitleTrack(int trackId);
+    void cycleSecondarySubtitle();
+
+    // Pitch & Semitone Control
+    void setPitch(double semitones);
+    double pitch() const { return m_pitch; }
+    void adjustPitch(double deltaSemitones);
+
+    // Bookmarks & Markers
+    void addBookmark(qint64 positionMs = -1, const QString &label = QString());
+    void removeBookmark(int index);
+    void clearBookmarks();
+    QList<qint64> bookmarks() const { return m_bookmarks; }
+    void nextBookmark();
+    void previousBookmark();
+
+    // A-B Looping
+    void setLoopPointA();
+    void setLoopPointB();
+    void clearLoop();
+    qint64 loopPointA() const { return m_loopPointA; }
+    qint64 loopPointB() const { return m_loopPointB; }
+    bool isLoopActive() const { return m_loopActive; }
+
+    // Subtitle & Audio Delays
+    void setSubtitleDelayMs(int delayMs);
+    int subtitleDelayMs() const { return m_subDelayMs; }
+    void adjustSubtitleDelayMs(int deltaMs);
+    void setAudioDelayMs(int delayMs);
+    int audioDelayMs() const { return m_audioDelayMs; }
+    void adjustAudioDelayMs(int deltaMs);
+
+    // Video Equalizer & Color Science
+    void setContrast(int val);
+    void setBrightness(int val);
+    void setGamma(int val);
+    void setSaturation(int val);
+    void setHue(int val);
+    int contrast() const { return m_contrast; }
+    int brightness() const { return m_brightness; }
+    int gamma() const { return m_gamma; }
+    int saturation() const { return m_saturation; }
+    int hue() const { return m_hue; }
+    void resetVideoEqualizer();
+
+    // Video Filters & Scaling
+    void setDebandEnabled(bool enabled);
+    bool isDebandEnabled() const { return m_deband; }
+    void setSharpen(double val);
+    double sharpen() const { return m_sharpen; }
+    void setAspectRatio(const QString &ratio);
+    QString aspectRatio() const { return m_aspectRatio; }
+    void setVideoZoom(double zoom);
+    double videoZoom() const { return m_zoom; }
+
+    // Audio DSP Enhancements
+    void setNightMode(bool enabled);
+    bool isNightMode() const { return m_nightMode; }
+    void setCrossfeedEnabled(bool enabled);
+    bool isCrossfeedEnabled() const { return m_crossfeed; }
+
+    // Chapters Navigation
+    void nextChapter();
+    void previousChapter();
+    int chapterCount() const;
+    int currentChapter() const;
+    QString currentChapterTitle() const;
+
+    // Screenshot Engine
+    bool takeScreenshot(const QString &targetFilePath = QString(), bool includeSubtitles = false);
 
     // Command execution
     int command(const QStringList &args);
@@ -162,6 +236,17 @@ signals:
     void endOfFileReached();
     void errorOccurred(const QString &errorMessage);
     void frameRenderNeeded();
+    void loopPointsChanged(qint64 aMs, qint64 bMs, bool active);
+    void subtitleDelayChanged(int delayMs);
+    void audioDelayChanged(int delayMs);
+    void videoEqualizerChanged(int contrast, int brightness, int gamma, int saturation, int hue);
+    void nightModeChanged(bool enabled);
+    void crossfeedChanged(bool enabled);
+    void chapterChanged(int index, const QString &title);
+    void secondarySubtitleChanged(int trackId);
+    void pitchChanged(double semitones);
+    void bookmarksChanged(const QList<qint64> &bookmarks);
+    void screenshotTaken(const QString &filePath);
 
 public slots:
     void processEvents();
@@ -187,7 +272,31 @@ private:
     bool m_isPaused = false;
     int m_selectedAid = 1;
     int m_selectedSid = -1;
+    int m_selectedSecondarySid = -1;
     int m_selectedVid = 1;
+    double m_pitch = 0.0;
+    QList<qint64> m_bookmarks;
+
+    qint64 m_loopPointA = -1;
+    qint64 m_loopPointB = -1;
+    bool m_loopActive = false;
+
+    int m_subDelayMs = 0;
+    int m_audioDelayMs = 0;
+
+    int m_contrast = 0;
+    int m_brightness = 0;
+    int m_gamma = 0;
+    int m_saturation = 0;
+    int m_hue = 0;
+
+    bool m_deband = false;
+    double m_sharpen = 0.0;
+    QString m_aspectRatio = "auto";
+    double m_zoom = 0.0;
+    bool m_nightMode = false;
+    bool m_crossfeed = false;
+    QString m_equalizerFilter;
 
     QList<TrackInfo> m_audioTracks;
     QList<TrackInfo> m_subtitleTracks;

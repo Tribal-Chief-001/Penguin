@@ -32,6 +32,12 @@ QStringList PlaylistManager::supportedSubtitleExtensions()
 
 bool PlaylistManager::isSupportedMedia(const QString &filePath)
 {
+    if (filePath.startsWith("http://", Qt::CaseInsensitive) ||
+        filePath.startsWith("https://", Qt::CaseInsensitive) ||
+        filePath.startsWith("rtmp://", Qt::CaseInsensitive) ||
+        filePath.startsWith("ytdl://", Qt::CaseInsensitive)) {
+        return true;
+    }
     QString ext = QFileInfo(filePath).suffix().toLower();
     return supportedAudioExtensions().contains(ext) || supportedVideoExtensions().contains(ext);
 }
@@ -85,13 +91,50 @@ void PlaylistManager::setCurrentIndex(int index)
 void PlaylistManager::addFile(const QString &filePath)
 {
     if (filePath.isEmpty()) return;
-    QFileInfo fi(filePath);
-    if (!fi.exists() || !isSupportedMedia(filePath)) return;
+    bool isUrl = filePath.startsWith("http://", Qt::CaseInsensitive) ||
+                 filePath.startsWith("https://", Qt::CaseInsensitive) ||
+                 filePath.startsWith("rtmp://", Qt::CaseInsensitive) ||
+                 filePath.startsWith("ytdl://", Qt::CaseInsensitive);
 
+    if (!isUrl) {
+        QFileInfo fi(filePath);
+        if (!fi.exists() || !isSupportedMedia(filePath)) return;
+
+        UI::PlaylistItem item;
+        item.filePath = filePath;
+        item.title = fi.baseName();
+        item.format = fi.suffix().toUpper();
+
+        m_items.append(item);
+    } else {
+        UI::PlaylistItem item;
+        item.filePath = filePath;
+        item.title = filePath;
+        item.format = "STREAM";
+        m_items.append(item);
+    }
+    rebuildShuffleOrder();
+    emit playlistUpdated();
+}
+
+void PlaylistManager::addItem(const UI::PlaylistItem &item)
+{
+    m_items.append(item);
+    rebuildShuffleOrder();
+    emit playlistUpdated();
+}
+
+void PlaylistManager::addItem(const QString &filePath, const QString &title,
+                              const QString &artist, const QString &album,
+                              qint64 durationMs, const QString &format)
+{
     UI::PlaylistItem item;
     item.filePath = filePath;
-    item.title = fi.baseName();
-    item.format = fi.suffix().toUpper();
+    item.title = title.isEmpty() ? (filePath.contains("://") ? filePath : QFileInfo(filePath).fileName()) : title;
+    item.artist = artist.isEmpty() ? "UNKNOWN ARTIST" : artist;
+    item.album = album.isEmpty() ? "UNKNOWN ALBUM" : album;
+    item.durationMs = durationMs;
+    item.format = format.isEmpty() ? (filePath.contains("://") ? "STREAM" : QFileInfo(filePath).suffix().toUpper()) : format;
 
     m_items.append(item);
     rebuildShuffleOrder();

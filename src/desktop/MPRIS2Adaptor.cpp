@@ -6,6 +6,8 @@
 #include <QCoreApplication>
 #include <QUrl>
 #include <QFileInfo>
+#include <QDir>
+#include <QCryptographicHash>
 #include <QtDBus/QDBusMetaType>
 
 namespace Penguin {
@@ -204,11 +206,17 @@ QVariantMap MPRIS2PlayerAdaptor::metadata() const
 
     const auto &meta = service()->engine()->metadata();
     qint64 durationUs = service()->engine()->durationMs() * 1000;
+    QString uri = service()->engine()->currentUri();
 
-    map["mpris:trackid"] = QVariant::fromValue(QDBusObjectPath("/org/mpris/MediaPlayer2/Track/0"));
+    // Generate dynamic unique track ID (/org/mpris/MediaPlayer2/Track/<hash>)
+    QString trackIdStr = "/org/mpris/MediaPlayer2/Track/0";
+    if (!uri.isEmpty()) {
+        QByteArray hash = QCryptographicHash::hash(uri.toUtf8(), QCryptographicHash::Md5).toHex();
+        trackIdStr = QString("/org/mpris/MediaPlayer2/Track/%1").arg(QString::fromLatin1(hash));
+    }
+    map["mpris:trackid"] = QVariant::fromValue(QDBusObjectPath(trackIdStr));
     map["mpris:length"] = durationUs;
 
-    QString uri = service()->engine()->currentUri();
     if (!uri.isEmpty()) {
         if (!uri.contains("://")) {
             map["xesam:url"] = QUrl::fromLocalFile(uri).toString();
@@ -233,6 +241,27 @@ QVariantMap MPRIS2PlayerAdaptor::metadata() const
 
     if (!meta.genre.isEmpty()) {
         map["xesam:genre"] = QStringList() << meta.genre;
+    }
+
+    // Add mpris:artUrl if artwork is found
+    if (!uri.isEmpty()) {
+        QString artUrl;
+        if (!uri.contains("://") || uri.startsWith("file://")) {
+            QString localPath = uri.startsWith("file://") ? QUrl(uri).toLocalFile() : uri;
+            QFileInfo fi(localPath);
+            QDir dir = fi.dir();
+            static const QStringList artNames = {"cover.jpg", "folder.jpg", "album.jpg", "cover.png", "folder.png", "front.jpg", "front.png"};
+            for (const QString &artName : artNames) {
+                QString candidate = dir.filePath(artName);
+                if (QFileInfo::exists(candidate)) {
+                    artUrl = QUrl::fromLocalFile(candidate).toString();
+                    break;
+                }
+            }
+        }
+        if (!artUrl.isEmpty()) {
+            map["mpris:artUrl"] = artUrl;
+        }
     }
 
     return map;

@@ -107,6 +107,14 @@ void PlaylistMatrixWidget::addItems(const QList<PlaylistItem> &items)
     emit playlistChanged();
 }
 
+void PlaylistMatrixWidget::setItems(const QList<PlaylistItem> &items, int currentIndex)
+{
+    m_items = items;
+    m_currentIndex = (currentIndex >= 0 && currentIndex < m_items.size()) ? currentIndex : (m_items.isEmpty() ? -1 : 0);
+    refreshTable();
+    emit playlistChanged();
+}
+
 void PlaylistMatrixWidget::removeItem(int index)
 {
     if (index >= 0 && index < m_items.size()) {
@@ -117,6 +125,7 @@ void PlaylistMatrixWidget::removeItem(int index)
             m_currentIndex--;
         }
         refreshTable();
+        emit itemRemoved(index);
         emit playlistChanged();
     }
 }
@@ -126,6 +135,7 @@ void PlaylistMatrixWidget::clearPlaylist()
     m_items.clear();
     m_currentIndex = -1;
     refreshTable();
+    emit playlistCleared();
     emit playlistChanged();
 }
 
@@ -142,13 +152,17 @@ void PlaylistMatrixWidget::moveItem(int fromIndex, int toIndex)
 {
     if (fromIndex >= 0 && fromIndex < m_items.size() &&
         toIndex >= 0 && toIndex < m_items.size() && fromIndex != toIndex) {
-        m_items.swapItemsAt(fromIndex, toIndex);
+        PlaylistItem it = m_items.takeAt(fromIndex);
+        m_items.insert(toIndex, it);
         if (m_currentIndex == fromIndex) {
             m_currentIndex = toIndex;
-        } else if (m_currentIndex == toIndex) {
-            m_currentIndex = fromIndex;
+        } else if (fromIndex < m_currentIndex && toIndex >= m_currentIndex) {
+            m_currentIndex--;
+        } else if (fromIndex > m_currentIndex && toIndex <= m_currentIndex) {
+            m_currentIndex++;
         }
         refreshTable();
+        emit itemMoved(fromIndex, toIndex);
         emit playlistChanged();
     }
 }

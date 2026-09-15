@@ -50,7 +50,27 @@ public slots:
     void openDirectory(const QString &dirPath);
     void openFileDialog();
     void openDirectoryDialog();
+    void openUrlDialog();
     void toggleFullscreen();
+    void takeScreenshot(bool includeSubtitles = false);
+    void setLoopPointA();
+    void setLoopPointB();
+    void clearLoop();
+    void adjustSubtitleDelay(int deltaMs);
+    void adjustAudioDelay(int deltaMs);
+    void toggleNightMode();
+    void toggleCrossfeed();
+    void toggleDeband();
+    void cycleAspectRatio();
+    void togglePipMode();
+    void cycleSecondarySubtitle();
+    void addBookmark();
+    void nextBookmark();
+    void adjustPitch(double deltaSemitones);
+    void nextChapter();
+    void previousChapter();
+    void openVideoEqualizerDialog();
+    void showOsdMessage(const QString &message, int durationMs = 2500);
 
 protected:
     bool event(QEvent *event) override;
@@ -78,6 +98,8 @@ private:
     Library::PlaylistManager *m_playlistMgr = nullptr;
 
     UIMode m_currentMode = UIMode::VideoViewfinder;
+    bool m_isPip = false;
+    QRect m_savedGeometry;
 };
 
 } // namespace UI

@@ -1,151 +1,101 @@
-# Project: Penguin — Tactile Digital Brutalist Linux Desktop Media Player
+# Project: Penguin Desktop Media Player
 
-## Architecture
-Penguin is built as a high-performance Linux desktop media player adhering to the Tactile Digital Brutalism design language with dual playback modes (Video Viewfinder & Hi-Fi Audio Deck), libmpv core decoding, audio DSP (10-band equalizer + real-time stereo VU meters), MPRIS2 D-Bus integration, SQLite state persistence, and a headless-capable test architecture.
+## 1. Architecture Overview
+Penguin is a next-generation Linux desktop media player built with a Tactile Digital Brutalist UI design language, a dual-mode playback engine (Viewfinder Video Mode & Hi-Fi Audio Deck Mode), high-performance media decoding via `libmpv` and FFmpeg, standard MPRIS2 D-Bus integration, SQLite WAL state persistence, and a multi-tiered automated test suite.
 
 ```
-+-------------------------------------------------------------------------------+
-|                                Penguin CLI / App                              |
-|                          (main.cpp / CommandLineParser)                       |
-+---------------------------------------+---------------------------------------+
-                                        |
-        +-------------------------------+-------------------------------+
-        |                               |                               |
-+-------v---------------+       +-------v---------------+       +-------v---------------+
-|    UI Subsystem       |       | Playback Engine Core  |       | System Integration    |
-| (Video Viewfinder &   |<----->| (MpvBackend / Audio   |<----->| (MPRIS2 D-Bus, XDG,   |
-|  Hi-Fi Audio Deck)    |       |  DSP / TrackManager)  |       |  Desktop, CLI)        |
-+-------+---------------+       +-------+---------------+       +-------+---------------+
-        |                               |                               |
-        +-------------------------------+-------------------------------+
-                                        |
-                        +---------------v---------------+
-                        | Library & State Persistence   |
-                        | (SQLite WAL / Playlist / Hist)|
-                        +-------------------------------+
++---------------------------------------------------------------------------------------+
+|                                    PENGUIN CORE GUI                                    |
+|  +-------------------------------------+   +---------------------------------------+  |
+|  |      VIEWFINDER VIDEO VIEWPORT      |   |            HI-FI AUDIO DECK           |  |
+|  | - Technical Safe-Area Reticles      |   | - Typographic Masthead & Artwork      |  |
+|  | - Mechanical SMPTE Tick Scrubber    |   | - Stereo Peak VU Meters (CH_L & CH_R) |  |
+|  | - Real-time Diagnostics HUD (OSD)   |   | - 10-Band Graphic Equalizer Rack      |  |
+|  | - Tactile Bottom Video Control Dock |   | - Synchronized .lrc Teleprompter      |  |
+|  | - Native Video Surface (wid/X11)    |   | - Playlist Queue Matrix               |  |
+|  +-------------------------------------+   +---------------------------------------+  |
++-------------------------------------------+-------------------------------------------+
+                                            |
+                               Qt Signals / Direct Calls
+                                            v
++---------------------------------------------------------------------------------------+
+|                                PENGUIN PLAYBACK ENGINE                                |
+|  - Transport: Play, Pause, Stop, Seek (Exact ms & SMPTE), Frame-Step (< 1F / 1F >)    |
+|  - Speed Scaling (0.5x to 2.0x pitch-preserved) & Audio/Subtitle Track Switchers      |
+|  - Audio Filters: 10-Band Graphic EQ DSP + Night Mode Compressor (`dynaudnorm`)       |
+|  - Video Processing: Deband Dithering + Lossless Forensic PNG Screenshot Export       |
+|  - A-B Looper & Stream URL Ingestion (yt-dlp / direct HTTP)                           |
++-------------------------------------+-------------------------------------------------+
+                                      |
+                    +-----------------+-----------------+
+                    |                                   |
+                    v                                   v
++---------------------------------------+   +-------------------------------------------+
+|          LIBMPV BACKEND CORE          |   |       AUDIO ANALYSIS & VU PIPELINE        |
+|  - HW Decode (VAAPI / NVDEC / SW)     |   |  - Dual-Path Waveform Peak/RMS Cache      |
+|  - Audio Output: PipeWire / PulseAudio|   |  - 60 FPS Ballistic Needle Dynamics       |
+|  - Subtitles Engine (libass)          |   |  - Peak Hold & Overload Clip Alerts       |
++---------------------------------------+   +-------------------------------------------+
+                    |                                   |
+                    +-----------------+-----------------+
+                                      |
+                                      v
++---------------------------------------------------------------------------------------+
+|                        DESKTOP INTEGRATION & PERSISTENCE                              |
+|  - MPRIS2 D-Bus Service (`org.mpris.MediaPlayer2.penguin` - Root & Player interfaces) |
+|  - CLI Argument Parser (`penguin [file] --audio --video --fullscreen ...`)            |
+|  - Desktop Packaging (`penguin.desktop`, scalable SVG icon, XDG directory compliance) |
+|  - SQLite WAL Database (`penguin.db` - playlists, history, settings, geometry)       |
++---------------------------------------------------------------------------------------+
 ```
 
-## Feature Inventory
-| # | Feature | Description | Milestone | Source |
-|---|---------|-------------|-----------|--------|
-| F01 | Multi-format Media Playback | Play MP4, MKV, WebM, AVI, MP3, FLAC, Opus, AAC, WAV with accurate duration/position | M1 | ORIGINAL_REQUEST §R1 |
-| F02 | Millisecond & SMPTE Seeking | Exact seek to ms and SMPTE timecode (HH:MM:SS:FF) | M1 | ORIGINAL_REQUEST §R1 |
-| F03 | Frame Stepping & Jumps | Single-frame step (< 1F / 1F >) and +/- 10s instant jumps | M1 | ORIGINAL_REQUEST §R1 |
-| F04 | Speed Control & Pitch Correction | Variable rate 0.5x to 2.0x with pitch preservation | M1 | ORIGINAL_REQUEST §R1 |
-| F05 | Track Switching & External Subs | Dynamic audio stream switching, subtitle stream switching, external .srt/.ass/.vtt | M1 | ORIGINAL_REQUEST §R1 |
-| F06 | 10-Band Graphic Equalizer DSP | 10-band peaking filter rack (32Hz-16kHz, +/-12dB) with factory presets & flat reset | M1 | ORIGINAL_REQUEST §R1, §R2 |
-| F07 | Stereo Peak VU Meter DSP | Real-time stereo channel peak/RMS level extraction (-60dB to +3dB) with decay | M1 | ORIGINAL_REQUEST §R2 |
-| F08 | Tactile Brutalist Design System | Deep obsidian base (#070709, #0B0B0E), 1px grid (#1E1E24), JetBrains Mono, safety orange (#FF4400) & signal lime (#CCFF00) | M2 | ORIGINAL_REQUEST §R2 |
-| F09 | Video Viewfinder Mode | Borderless video viewport, safe-area reticles, technical diagnostics HUD (FPS, drops, bitrate, res, render time) | M2 | ORIGINAL_REQUEST §R2 |
-| F10 | Mechanical Tick Ruler Scrubber | Mechanical tick ruler scrubber with SMPTE timecodes, chapter marks, remaining time | M2 | ORIGINAL_REQUEST §R2 |
-| F11 | Tactile Video Control Dock | Bottom dock with frame-step, speed toggles, stream switchers, fullscreen/PiP | M2 | ORIGINAL_REQUEST §R2 |
-| F12 | Hi-Fi Audio Deck Mode | Typographic metadata board, animated stereo VU meters, 10-band slider rack | M2 | ORIGINAL_REQUEST §R2 |
-| F13 | Synchronized LRC Teleprompter | Real-time .lrc lyric parser with active line highlighting and click-to-seek | M2 | ORIGINAL_REQUEST §R2 |
-| F14 | Playlist Queue Matrix | Interactive queue matrix with track reordering, status indicators, and durations | M2 | ORIGINAL_REQUEST §R2, §R4 |
-| F15 | MPRIS2 D-Bus Interface | Register org.mpris.MediaPlayer2.penguin on session bus, Root & Player interfaces, media keys | M3 | ORIGINAL_REQUEST §R3 |
-| F16 | Desktop Packaging & Icon | FreeDesktop .desktop entry with media action shortcuts, scalable SVG icon | M3 | ORIGINAL_REQUEST §R3 |
-| F17 | CLI Options & Arguments | Command-line parsing: files/URLs, --audio, --video, --fullscreen, --eq, --test, --help | M3 | ORIGINAL_REQUEST §R3 |
-| F18 | Audio Subsystem Routing | PipeWire & PulseAudio integration with graceful fallback | M3 | ORIGINAL_REQUEST §R3 |
-| F19 | File & Directory Loading | Open file, recursive folder scan, drag-and-drop (text/uri-list) | M4 | ORIGINAL_REQUEST §R4 |
-| F20 | State & History Persistence | SQLite WAL database storing playback history, volume, window geometry, playlist | M4 | ORIGINAL_REQUEST §R4 |
-| F21 | Synthetic Test Media Generator | Zero-dependency test media generator for multi-track video/audio/subtitles | M5 | ORIGINAL_REQUEST §R5 |
-| F22 | Comprehensive Automated Unit Tests | Unit tests for playback pipeline, Biquad EQ math, SMPTE, LRC parsing, MPRIS2 | M5 | ORIGINAL_REQUEST §R5 |
-| F23 | Headless Verification Runner | CLI test mode and headless verification script (QT_QPA_PLATFORM=offscreen) | M5 | ORIGINAL_REQUEST §R5 |
+---
 
-## Milestones
+## 2. Feature Inventory
+Every feature from the survey phase is assigned to a milestone:
+
+| # | Category | Feature | Description | Milestone | Status |
+|---|---|---|---|---|---|
+| 1 | Core Engine | libmpv FFI Core Binding | Direct ctypes/C-API binding to `libmpv.so.2` | M1 | **DONE** |
+| 2 | Core Engine | Multi-Format A/V Playback | MP4, MKV, WebM, AVI, MP3, FLAC, Opus, AAC, WAV | M1 | **DONE** |
+| 3 | Core Engine | Transport & Exact ms Seeking | Play, pause, stop, volume, mute, absolute & relative ms seek | M1 | **DONE** |
+| 4 | Core Engine | SMPTE 12M Timecode Engine | Accurate SMPTE timecode (NDF & 29.97 DF) | M1 | **DONE** |
+| 5 | Core Engine | Bidirectional Frame Stepping | Single-frame forward (`1F >`) and backward (`< 1F`) | M1 | **DONE** |
+| 6 | Core Engine | Pitch-Preserved Speed Control | Speed scaling from 0.5x to 2.0x via scaletempo2 | M1 | **DONE** |
+| 7 | Core Engine | Track Introspection & Switch | Dynamic audio and subtitle track discovery and selection | M1 | **DONE** |
+| 8 | Core Engine | External Subtitle Loading | Loading `.srt`, `.ass`, `.vtt` subtitle files | M1 | **DONE** |
+| 9 | Core Engine | A-B Repeat Looping | Setting and looping between time A and time B | M1 | **DONE** |
+| 10 | Core Engine | Night Mode Dialogue Compressor | Dynamic dialogue boost audio filter (`dynaudnorm` / `acompressor`)| M1 | **DONE** |
+| 11 | Core Engine | Deband & Video Dithering | Gradient debanding and dither processing | M1 | **DONE** |
+| 12 | Core Engine | Forensic Screenshot Export | Frame-accurate lossless PNG screenshot export with metadata | M1 | **DONE** |
+| 13 | Core Engine | Network Stream URL Ingestion | Direct extraction and streaming of web video URLs | M1 | **DONE** |
+| 14 | UI | Tactile Brutalist Design Tokens | Obsidian base (#070709), 1px grid (#1E1E24), Swiss/Monospace fonts, Safety Orange & Lime accents | M2 | IN_PROGRESS |
+| 15 | UI | Video Viewfinder Mode | Native video surface, safe-area reticles, telemetry OSD HUD, SMPTE tick scrubber, bottom dock | M2 | IN_PROGRESS |
+| 16 | UI | Hi-Fi Audio Deck Mode | Typographic masthead, stereo peak VU meters, 10-band EQ rack, synced .lrc teleprompter, playlist matrix | M2 | IN_PROGRESS |
+| 17 | UI | Stereo Peak VU Meter Rack | Animated 30-segment LED ballistics (CH_L & CH_R) with peak-hold & clip alerts | M2 | IN_PROGRESS |
+| 18 | UI | 10-Band Graphic Equalizer Rack | ISO center frequencies (32Hz-16kHz), ±12dB sliders, presets, flat reset | M2 | IN_PROGRESS |
+| 19 | UI | Synchronized LRC Teleprompter | Line and word-level .lrc parsing, active highlight, smooth auto-scroll, click-to-seek | M2 | IN_PROGRESS |
+| 20 | UI | Playlist Queue Matrix | Grid display, search filter, track reordering, shuffle | M2 | IN_PROGRESS |
+| 21 | Desktop | MPRIS2 D-Bus Service | `org.mpris.MediaPlayer2.penguin` Root and Player interfaces, properties & signals | M3 | IN_PROGRESS |
+| 22 | Desktop | Single-Instance IPC & CLI | Command-line argument parsing and remote command forwarding | M3 | IN_PROGRESS |
+| 23 | Desktop | Audio Routing (PipeWire/Pulse) | Low-latency audio sink configuration via PipeWire/PulseAudio | M3 | IN_PROGRESS |
+| 24 | Desktop | Desktop Packaging & Assets | `.desktop` launcher, scalable SVG icon, hicolor icon hierarchy | M3 | IN_PROGRESS |
+| 25 | Persistence | SQLite WAL State Database | Schema creation, WAL mode, crash recovery, settings storage | M4 | IN_PROGRESS |
+| 26 | Persistence | History & Playlist Persistence | Track playback history, saved playlists, resume bookmarks | M4 | IN_PROGRESS |
+| 27 | Persistence | Window & DSP State Restore | Window geometry, volume, mute, mode, EQ presets persistence | M4 | IN_PROGRESS |
+| 28 | Verification | Multi-Tier E2E Test Suite | Tiers 1-4 requirement-driven opaque-box test suite (399 tests) | E2E/M5 | **DONE** |
+| 29 | Verification | Adversarial Hardening (Tier 5) | White-box adversarial stress testing and edge-case validation | M5 | PLANNED |
+| 30 | Verification | Headless CLI Verification | Headless runner executing 100% of test suites with exit code 0 | M5 | **DONE** |
+
+---
+
+## 3. Milestones & Dependencies
+
 | # | Name | Scope | Dependencies | Status |
-|---|------|-------|-------------|--------|
-| M1 | Core Playback Engine & Audio DSP | `src/core/` — MpvBackend, Timecode, EqualizerDSP, VUMeterDSP, TrackManager | none | DONE |
-| M2 | Tactile Digital Brutalist UI | `src/ui/` — Viewfinder, AudioDeck, Scrubber, VU Meter, EQ Rack, Teleprompter, Theme | M1 | DONE |
-| M3 | Linux Desktop Integration, MPRIS2 & CLI | `src/desktop/` — MPRIS2 D-Bus adaptor, .desktop, Icon, CLI parser, Hotkeys | M1 | DONE |
-| M4 | Media Library & State Persistence | `src/library/` — SQLite WAL DB, History, Playlist matrix, Drag&Drop | M1, M2 | DONE |
-| M5 | E2E Test Suite & Full Verification | `tests/` — Tiers 1-4 test suite, Tier 5 adversarial tests, headless runner | M1, M2, M3, M4 | DONE |
-
-## Interface Contracts
-
-### 1. Core Engine ↔ UI Subsystem (`src/core/` ↔ `src/ui/`)
-- `PlaybackEngine`:
-  - `loadMedia(const QString &uri, bool autoPlay = true)` -> `bool`
-  - `play()`, `pause()`, `togglePlayPause()`, `stop()`
-  - `seek(qint64 positionMs)`, `seekRelative(qint64 offsetMs)`, `frameStep(int direction)`
-  - `setSpeed(double rate)` (0.5 to 2.0), `setVolume(int volume)` (0 to 100), `setMuted(bool mute)`
-  - `setEqualizerBand(int bandIndex, double gainDb)`, `setEqualizerPreset(const QString &presetName)`
-  - Signals:
-    - `positionChanged(qint64 positionMs, const QString &smpteTimecode)`
-    - `durationChanged(qint64 durationMs, const QString &smpteTimecode)`
-    - `playbackStateChanged(PlaybackState state)`
-    - `vuLevelsChanged(double leftPeakDb, double rightPeakDb, double leftRmsDb, double rightRmsDb)`
-    - `tracksChanged(const QList<TrackInfo> &audioTracks, const QList<TrackInfo> &subTracks)`
-    - `telemetryUpdated(const DiagnosticsData &telemetry)`
-
-### 2. Core Engine ↔ MPRIS2 D-Bus (`src/core/` ↔ `src/desktop/`)
-- `MPRIS2Adaptor` maps D-Bus calls:
-  - `Play()`, `Pause()`, `PlayPause()`, `Stop()`, `Next()`, `Previous()`, `Seek(qint64 offsetMicroseconds)`, `SetPosition(const QDBusObjectPath &trackId, qint64 positionMicroseconds)`
-  - Properties: `PlaybackStatus` ("Playing", "Paused", "Stopped"), `LoopStatus`, `Rate`, `Shuffle`, `Metadata` (`mpris:trackid`, `mpris:length`, `xesam:title`, `xesam:artist`, `xesam:album`, `xesam:url`), `Volume`, `Position`, `CanControl`, `CanSeek`, `CanPlay`, `CanPause`.
-  - Signal: `PropertiesChanged` on `org.freedesktop.DBus.Properties`.
-
-### 3. Core Engine & UI ↔ State Persistence (`src/library/`)
-- `DatabaseManager`:
-  - `savePlaybackHistory(const QString &uri, const QString &title, qint64 positionMs, qint64 durationMs)`
-  - `getRecentHistory(int limit = 50)` -> `QList<HistoryEntry>`
-  - `savePlaylist(const QString &name, const QList<PlaylistItem> &items)`
-  - `loadPlaylist(const QString &name)` -> `QList<PlaylistItem>`
-  - `saveSetting(const QString &key, const QVariant &value)`
-  - `getSetting(const QString &key, const QVariant &defaultValue = QVariant())` -> `QVariant`
-
-## Code Layout
-```
-/home/lucifer/Documents/Projects/Penguin/
-├── CMakeLists.txt                # Root CMake / QMake build configuration
-├── penguin.pro                   # Qt6 project file
-├── README.md                     # Build, install, and usage documentation
-├── penguin.desktop               # FreeDesktop XDG Desktop Entry
-├── icons/                        # Scalable and pixel icons
-│   ├── hicolor/
-│   │   ├── scalable/apps/penguin.svg
-│   │   ├── 48x48/apps/penguin.png
-│   │   └── 256x256/apps/penguin.png
-├── src/
-│   ├── main.cpp                  # Application entry point & CLI routing
-│   ├── core/                     # Playback engine, DSP, timecode, tracks
-│   │   ├── PlaybackEngine.h / .cpp
-│   │   ├── MpvBackend.h / .cpp
-│   │   ├── TimecodeFormatter.h / .cpp
-│   │   ├── EqualizerDSP.h / .cpp
-│   │   ├── VUMeterDSP.h / .cpp
-│   │   ├── SubtitleLoader.h / .cpp
-│   │   └── LrcParser.h / .cpp
-│   ├── ui/                       # Tactile Digital Brutalist UI
-│   │   ├── MainWindow.h / .cpp
-│   │   ├── BrutalistTheme.h / .cpp
-│   │   ├── ViewfinderWidget.h / .cpp
-│   │   ├── AudioDeckWidget.h / .cpp
-│   │   ├── TickScrubberWidget.h / .cpp
-│   │   ├── VUMeterWidget.h / .cpp
-│   │   ├── EqualizerRackWidget.h / .cpp
-│   │   ├── TeleprompterWidget.h / .cpp
-│   │   ├── PlaylistMatrixWidget.h / .cpp
-│   │   └── DiagnosticsHUDWidget.h / .cpp
-│   ├── desktop/                  # MPRIS2 D-Bus & system integration
-│   │   ├── DBusService.h / .cpp
-│   │   ├── MPRIS2Adaptor.h / .cpp
-│   │   └── CommandLineParser.h / .cpp
-│   └── library/                  # Database, persistence & file management
-│       ├── DatabaseManager.h / .cpp
-│       ├── StatePersistence.h / .cpp
-│       └── PlaylistManager.h / .cpp
-├── tests/                        # Comprehensive test suite
-│   ├── test_synthetic_media.py   # Test media synthesis engine
-│   ├── test_timecode.cpp / .py   # SMPTE timecode calculation tests
-│   ├── test_equalizer_dsp.cpp    # Analytical Biquad filter verification
-│   ├── test_lrc_parser.cpp       # Synchronized LRC cue parsing tests
-│   ├── test_mpris2_dbus.py       # MPRIS2 D-Bus protocol validation tests
-│   ├── test_persistence.cpp      # SQLite WAL persistence unit tests
-│   ├── test_playback_engine.cpp  # Multi-format playback engine test
-│   ├── test_ui_headless.cpp      # Offscreen QPA UI rendering tests
-│   └── test_e2e_runner.py        # Comprehensive headless verification harness
-└── scripts/
-    ├── build.sh                  # One-step compilation script
-    ├── run_tests.sh              # Headless test runner script
-    └── package.sh                # Desktop packaging & installation script
-```
+|---|---|---|---|---|
+| **M1** | Core Playback Engine & Audio DSP | `src/engine/` - MPV backend, transport, SMPTE, stepping, EQ DSP, night mode, deband, screenshots, subtitle engine | none | **DONE** |
+| **M2** | Tactile Digital Brutalist GUI | `src/ui/` - Theme tokens, Viewfinder mode, Audio Deck mode, VU meter widget, EQ rack, LRC teleprompter, tick scrubber, playlist matrix | M1 | IN_PROGRESS |
+| **M3** | Linux Desktop Integration | `src/desktop/` - MPRIS2 D-Bus service, CLI parser, single-instance IPC, PipeWire/Pulse routing, `.desktop` & icons | M1 | IN_PROGRESS |
+| **M4** | Media Library & State Persistence | `src/library/` - SQLite WAL database, schema migrations, history, playlists, settings persistence | M1 | IN_PROGRESS |
+| **E2E** | E2E Test Track (Parallel) | `tests/` & `run_tests.py` - Test harness, test runners, Tier 1-4 test suites (Category-Partition, BVA, Pairwise, Real-World) | none | **DONE** |
+| **M5** | Final Integration & E2E 100% Pass | Full system integration, Phase 1 (100% Tier 1-4 Pass) & Phase 2 (Adversarial Tier 5 Hardening) | M1, M2, M3, M4, E2E | PLANNED |

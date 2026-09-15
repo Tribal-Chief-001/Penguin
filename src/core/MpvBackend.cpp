@@ -1,6 +1,9 @@
 #include "MpvBackend.h"
 #include <QMetaObject>
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QDateTime>
+#include <QDir>
 #include <QDebug>
 #include <clocale>
 #include <cmath>
@@ -41,7 +44,7 @@ bool MpvBackend::initialize(bool offscreen)
     }
 
     // Set engine options
-    mpv_set_option_string(m_mpv, "ytdl", "no");
+    mpv_set_option_string(m_mpv, "ytdl", "yes");
     mpv_set_option_string(m_mpv, "audio-pitch-correction", "yes");
     mpv_set_option_string(m_mpv, "keep-open", "yes");
     mpv_set_option_string(m_mpv, "terminal", "no");
@@ -247,9 +250,40 @@ void MpvBackend::setMuted(bool mute)
 
 void MpvBackend::setAudioFilter(const QString &filterString)
 {
+    m_equalizerFilter = filterString;
+    updateAudioFilters();
+}
+
+void MpvBackend::setEqualizerFilter(const QString &eqFilter)
+{
+    m_equalizerFilter = eqFilter;
+    updateAudioFilters();
+}
+
+QString MpvBackend::composeAudioFilterGraph() const
+{
+    QStringList filters;
+    if (!m_equalizerFilter.trimmed().isEmpty()) {
+        filters.append(m_equalizerFilter.trimmed());
+    }
+    if (m_nightMode) {
+        filters.append("lavfi=[dynaudnorm=f=75:g=15:p=0.95:m=10.0:r=0.9]");
+    }
+    if (m_crossfeed) {
+        filters.append("lavfi=[bs2b=profile=cmoy]");
+    }
+    if (!qFuzzyIsNull(m_pitch)) {
+        double pitchScale = std::pow(2.0, m_pitch / 12.0);
+        filters.append(QString("rubberband=pitch-scale=%1").arg(pitchScale, 0, 'f', 4));
+    }
+    return filters.join(',');
+}
+
+void MpvBackend::updateAudioFilters()
+{
     if (!m_mpv) return;
-    QByteArray filterBytes = filterString.toUtf8();
-    mpv_set_property_string(m_mpv, "af", filterBytes.constData());
+    QString graph = composeAudioFilterGraph();
+    mpv_set_property_string(m_mpv, "af", graph.toUtf8().constData());
 }
 
 void MpvBackend::setAudioTrack(int trackId)
@@ -283,6 +317,364 @@ bool MpvBackend::loadExternalSubtitle(const QString &filePath)
     const char *args[] = {"sub-add", pathBytes.constData(), "select", nullptr};
     int err = mpv_command(m_mpv, args);
     return err >= 0;
+}
+
+void MpvBackend::setLoopPointA()
+{
+    m_loopPointA = m_positionMs;
+    if (m_loopPointB > 0 && m_loopPointB <= m_loopPointA) {
+        m_loopPointB = -1;
+    }
+    m_loopActive = (m_loopPointA >= 0 && m_loopPointB > m_loopPointA);
+    if (m_mpv) {
+        double sec = m_loopPointA / 1000.0;
+        mpv_set_property(m_mpv, "ab-loop-a", MPV_FORMAT_DOUBLE, &sec);
+    }
+    emit loopPointsChanged(m_loopPointA, m_loopPointB, m_loopActive);
+}
+
+void MpvBackend::setLoopPointB()
+{
+    if (m_loopPointA < 0) {
+        m_loopPointA = 0;
+    }
+    m_loopPointB = m_positionMs;
+    m_loopActive = (m_loopPointB > m_loopPointA);
+    if (m_mpv) {
+        double sec = m_loopPointB / 1000.0;
+        mpv_set_property(m_mpv, "ab-loop-b", MPV_FORMAT_DOUBLE, &sec);
+    }
+    emit loopPointsChanged(m_loopPointA, m_loopPointB, m_loopActive);
+}
+
+void MpvBackend::clearLoop()
+{
+    m_loopPointA = -1;
+    m_loopPointB = -1;
+    m_loopActive = false;
+    if (m_mpv) {
+        mpv_set_property_string(m_mpv, "ab-loop-a", "no");
+        mpv_set_property_string(m_mpv, "ab-loop-b", "no");
+    }
+    emit loopPointsChanged(m_loopPointA, m_loopPointB, m_loopActive);
+}
+
+void MpvBackend::setSubtitleDelayMs(int delayMs)
+{
+    m_subDelayMs = delayMs;
+    if (m_mpv) {
+        double sec = delayMs / 1000.0;
+        mpv_set_property(m_mpv, "sub-delay", MPV_FORMAT_DOUBLE, &sec);
+    }
+    emit subtitleDelayChanged(m_subDelayMs);
+}
+
+void MpvBackend::adjustSubtitleDelayMs(int deltaMs)
+{
+    setSubtitleDelayMs(m_subDelayMs + deltaMs);
+}
+
+void MpvBackend::setAudioDelayMs(int delayMs)
+{
+    m_audioDelayMs = delayMs;
+    if (m_mpv) {
+        double sec = delayMs / 1000.0;
+        mpv_set_property(m_mpv, "audio-delay", MPV_FORMAT_DOUBLE, &sec);
+    }
+    emit audioDelayChanged(m_audioDelayMs);
+}
+
+void MpvBackend::adjustAudioDelayMs(int deltaMs)
+{
+    setAudioDelayMs(m_audioDelayMs + deltaMs);
+}
+
+void MpvBackend::setContrast(int val)
+{
+    m_contrast = qBound(-100, val, 100);
+    if (m_mpv) {
+        int64_t v = m_contrast;
+        mpv_set_property(m_mpv, "contrast", MPV_FORMAT_INT64, &v);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::setBrightness(int val)
+{
+    m_brightness = qBound(-100, val, 100);
+    if (m_mpv) {
+        int64_t v = m_brightness;
+        mpv_set_property(m_mpv, "brightness", MPV_FORMAT_INT64, &v);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::setGamma(int val)
+{
+    m_gamma = qBound(-100, val, 100);
+    if (m_mpv) {
+        int64_t v = m_gamma;
+        mpv_set_property(m_mpv, "gamma", MPV_FORMAT_INT64, &v);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::setSaturation(int val)
+{
+    m_saturation = qBound(-100, val, 100);
+    if (m_mpv) {
+        int64_t v = m_saturation;
+        mpv_set_property(m_mpv, "saturation", MPV_FORMAT_INT64, &v);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::setHue(int val)
+{
+    m_hue = qBound(-100, val, 100);
+    if (m_mpv) {
+        int64_t v = m_hue;
+        mpv_set_property(m_mpv, "hue", MPV_FORMAT_INT64, &v);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::resetVideoEqualizer()
+{
+    m_contrast = 0;
+    m_brightness = 0;
+    m_gamma = 0;
+    m_saturation = 0;
+    m_hue = 0;
+    if (m_mpv) {
+        int64_t zero = 0;
+        mpv_set_property(m_mpv, "contrast", MPV_FORMAT_INT64, &zero);
+        mpv_set_property(m_mpv, "brightness", MPV_FORMAT_INT64, &zero);
+        mpv_set_property(m_mpv, "gamma", MPV_FORMAT_INT64, &zero);
+        mpv_set_property(m_mpv, "saturation", MPV_FORMAT_INT64, &zero);
+        mpv_set_property(m_mpv, "hue", MPV_FORMAT_INT64, &zero);
+    }
+    emit videoEqualizerChanged(m_contrast, m_brightness, m_gamma, m_saturation, m_hue);
+}
+
+void MpvBackend::setDebandEnabled(bool enabled)
+{
+    m_deband = enabled;
+    if (m_mpv) {
+        mpv_set_property_string(m_mpv, "deband", enabled ? "yes" : "no");
+    }
+}
+
+void MpvBackend::setSharpen(double val)
+{
+    m_sharpen = qBound(-1.0, val, 1.0);
+    if (m_mpv) {
+        mpv_set_property(m_mpv, "sharpen", MPV_FORMAT_DOUBLE, &m_sharpen);
+    }
+}
+
+void MpvBackend::setAspectRatio(const QString &ratio)
+{
+    m_aspectRatio = ratio;
+    if (m_mpv) {
+        if (ratio == "auto" || ratio.isEmpty()) {
+            mpv_set_property_string(m_mpv, "video-aspect-override", "-1");
+        } else {
+            QByteArray rBytes = ratio.toUtf8();
+            mpv_set_property_string(m_mpv, "video-aspect-override", rBytes.constData());
+        }
+    }
+}
+
+void MpvBackend::setVideoZoom(double zoom)
+{
+    m_zoom = qBound(0.0, zoom, 2.0);
+    if (m_mpv) {
+        mpv_set_property(m_mpv, "video-zoom", MPV_FORMAT_DOUBLE, &m_zoom);
+    }
+}
+
+void MpvBackend::setNightMode(bool enabled)
+{
+    m_nightMode = enabled;
+    updateAudioFilters();
+    emit nightModeChanged(m_nightMode);
+}
+
+bool MpvBackend::takeScreenshot(const QString &targetFilePath, bool includeSubtitles)
+{
+    if (!m_mpv) return false;
+    QString path = targetFilePath;
+    if (path.isEmpty()) {
+        QString baseDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+        if (baseDir.isEmpty() || !QDir(baseDir).exists()) {
+            baseDir = QDir::homePath();
+        }
+        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        path = QString("%1/penguin_screenshot_%2.png").arg(baseDir, timestamp);
+    }
+
+    QByteArray pathBytes = path.toUtf8();
+    const char *mode = includeSubtitles ? "subtitles" : "video";
+    const char *args[] = {"screenshot-to-file", pathBytes.constData(), mode, nullptr};
+    int err = mpv_command(m_mpv, args);
+    if (err >= 0) {
+        emit screenshotTaken(path);
+        return true;
+    }
+    return false;
+}
+
+void MpvBackend::setCrossfeedEnabled(bool enabled)
+{
+    m_crossfeed = enabled;
+    updateAudioFilters();
+    emit crossfeedChanged(m_crossfeed);
+}
+
+void MpvBackend::nextChapter()
+{
+    if (!m_mpv) return;
+    const char *args[] = {"add", "chapter", "1", nullptr};
+    mpv_command(m_mpv, args);
+    emit chapterChanged(currentChapter(), currentChapterTitle());
+}
+
+void MpvBackend::previousChapter()
+{
+    if (!m_mpv) return;
+    const char *args[] = {"add", "chapter", "-1", nullptr};
+    mpv_command(m_mpv, args);
+    emit chapterChanged(currentChapter(), currentChapterTitle());
+}
+
+int MpvBackend::chapterCount() const
+{
+    if (!m_mpv) return 0;
+    int64_t count = 0;
+    if (mpv_get_property(m_mpv, "chapters", MPV_FORMAT_INT64, &count) >= 0) {
+        return static_cast<int>(count);
+    }
+    return 0;
+}
+
+int MpvBackend::currentChapter() const
+{
+    if (!m_mpv) return -1;
+    int64_t ch = -1;
+    if (mpv_get_property(m_mpv, "chapter", MPV_FORMAT_INT64, &ch) >= 0) {
+        return static_cast<int>(ch);
+    }
+    return -1;
+}
+
+QString MpvBackend::currentChapterTitle() const
+{
+    if (!m_mpv) return QString();
+    char *title = nullptr;
+    if (mpv_get_property(m_mpv, "chapter-metadata/by-key/title", MPV_FORMAT_STRING, &title) >= 0 && title) {
+        QString res = QString::fromUtf8(title);
+        mpv_free(title);
+        return res;
+    }
+    int ch = currentChapter();
+    return (ch >= 0) ? QString("Chapter %1").arg(ch + 1) : QString();
+}
+
+void MpvBackend::selectSecondarySubtitleTrack(int trackId)
+{
+    m_selectedSecondarySid = trackId;
+    if (m_mpv) {
+        if (trackId <= 0) {
+            mpv_set_property_string(m_mpv, "secondary-sid", "no");
+        } else {
+            QByteArray trackBytes = QByteArray::number(trackId);
+            mpv_set_property_string(m_mpv, "secondary-sid", trackBytes.constData());
+        }
+    }
+    emit secondarySubtitleChanged(m_selectedSecondarySid);
+}
+
+void MpvBackend::cycleSecondarySubtitle()
+{
+    if (m_subtitleTracks.isEmpty()) return;
+    if (m_selectedSecondarySid <= 0) {
+        selectSecondarySubtitleTrack(m_subtitleTracks.first().id);
+    } else {
+        int currentIndex = -1;
+        for (int i = 0; i < m_subtitleTracks.size(); ++i) {
+            if (m_subtitleTracks[i].id == m_selectedSecondarySid) {
+                currentIndex = i;
+                break;
+            }
+        }
+        if (currentIndex >= 0 && currentIndex + 1 < m_subtitleTracks.size()) {
+            selectSecondarySubtitleTrack(m_subtitleTracks[currentIndex + 1].id);
+        } else {
+            selectSecondarySubtitleTrack(-1); // Off
+        }
+    }
+}
+
+void MpvBackend::setPitch(double semitones)
+{
+    m_pitch = qBound(-12.0, semitones, 12.0);
+    updateAudioFilters();
+    emit pitchChanged(m_pitch);
+}
+
+void MpvBackend::adjustPitch(double deltaSemitones)
+{
+    setPitch(m_pitch + deltaSemitones);
+}
+
+void MpvBackend::addBookmark(qint64 positionMs, const QString &label)
+{
+    Q_UNUSED(label);
+    qint64 pos = (positionMs >= 0) ? positionMs : m_positionMs;
+    if (!m_bookmarks.contains(pos)) {
+        m_bookmarks.append(pos);
+        std::sort(m_bookmarks.begin(), m_bookmarks.end());
+        emit bookmarksChanged(m_bookmarks);
+    }
+}
+
+void MpvBackend::removeBookmark(int index)
+{
+    if (index >= 0 && index < m_bookmarks.size()) {
+        m_bookmarks.removeAt(index);
+        emit bookmarksChanged(m_bookmarks);
+    }
+}
+
+void MpvBackend::clearBookmarks()
+{
+    m_bookmarks.clear();
+    emit bookmarksChanged(m_bookmarks);
+}
+
+void MpvBackend::nextBookmark()
+{
+    if (m_bookmarks.isEmpty()) return;
+    for (qint64 b : m_bookmarks) {
+        if (b > m_positionMs + 500) {
+            seekAbsoluteMs(b);
+            return;
+        }
+    }
+    seekAbsoluteMs(m_bookmarks.first());
+}
+
+void MpvBackend::previousBookmark()
+{
+    if (m_bookmarks.isEmpty()) return;
+    for (int i = m_bookmarks.size() - 1; i >= 0; --i) {
+        if (m_bookmarks[i] < m_positionMs - 500) {
+            seekAbsoluteMs(m_bookmarks[i]);
+            return;
+        }
+    }
+    seekAbsoluteMs(m_bookmarks.last());
 }
 
 int MpvBackend::command(const QStringList &args)

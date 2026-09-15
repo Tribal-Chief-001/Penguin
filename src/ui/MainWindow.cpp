@@ -11,6 +11,11 @@
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QStatusBar>
+#include <QDialog>
+#include <QFormLayout>
+#include <QLabel>
 #include <QShortcut>
 
 namespace Penguin {
@@ -75,9 +80,10 @@ void MainWindow::setupShortcuts()
     addAppShortcut(QKeySequence(Qt::Key_Space), [this]() { if (m_engine) m_engine->togglePlayPause(); });
     addAppShortcut(QKeySequence(Qt::Key_K), [this]() { if (m_engine) m_engine->togglePlayPause(); });
 
-    // 2. File Dialogs
+    // 2. File & Stream Dialogs
     addAppShortcut(QKeySequence(Qt::CTRL | Qt::Key_O), [this]() { openFileDialog(); });
     addAppShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O), [this]() { openDirectoryDialog(); });
+    addAppShortcut(QKeySequence(Qt::CTRL | Qt::Key_U), [this]() { openUrlDialog(); });
 
     // 3. Seeking
     addAppShortcut(QKeySequence(Qt::Key_Left), [this]() { if (m_engine) m_engine->seekRelative(-10000); });
@@ -97,20 +103,51 @@ void MainWindow::setupShortcuts()
     addAppShortcut(QKeySequence(Qt::Key_M), [this]() { if (m_engine) m_engine->setMuted(!m_engine->isMuted()); });
 
     // 6. Speed
-    addAppShortcut(QKeySequence(Qt::Key_BracketLeft), [this]() { if (m_engine) m_engine->setSpeed(std::max(0.25, m_engine->speed() - 0.1)); });
-    addAppShortcut(QKeySequence(Qt::Key_BracketRight), [this]() { if (m_engine) m_engine->setSpeed(std::min(4.0, m_engine->speed() + 0.1)); });
+    addAppShortcut(QKeySequence(Qt::Key_BracketLeft), [this]() { setLoopPointA(); });
+    addAppShortcut(QKeySequence(Qt::Key_BracketRight), [this]() { setLoopPointB(); });
+    addAppShortcut(QKeySequence(Qt::Key_Backslash), [this]() { clearLoop(); });
     addAppShortcut(QKeySequence(Qt::Key_Backspace), [this]() { if (m_engine) m_engine->setSpeed(1.0); });
 
-    // 7. Fullscreen & Mode
+    // 7. Subtitle & Audio Delays
+    addAppShortcut(QKeySequence(Qt::Key_Z), [this]() { adjustSubtitleDelay(-50); });
+    addAppShortcut(QKeySequence(Qt::Key_X), [this]() { adjustSubtitleDelay(50); });
+    addAppShortcut(QKeySequence(Qt::SHIFT | Qt::Key_Z), [this]() { adjustAudioDelay(-50); });
+    addAppShortcut(QKeySequence(Qt::SHIFT | Qt::Key_X), [this]() { adjustAudioDelay(50); });
+
+    // 8. Visual & DSP Toggles
+    addAppShortcut(QKeySequence(Qt::Key_N), [this]() { toggleNightMode(); });
+    addAppShortcut(QKeySequence(Qt::Key_C), [this]() { toggleCrossfeed(); });
+    addAppShortcut(QKeySequence(Qt::Key_D), [this]() { toggleDeband(); });
+    addAppShortcut(QKeySequence(Qt::Key_A), [this]() { cycleAspectRatio(); });
+    addAppShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), [this]() { openVideoEqualizerDialog(); });
+    addAppShortcut(QKeySequence(Qt::Key_T), [this]() { togglePipMode(); });
+    addAppShortcut(QKeySequence(Qt::Key_V), [this]() { cycleSecondarySubtitle(); });
+
+    // 9. Pitch Shifting (Musical Semitones)
+    addAppShortcut(QKeySequence(Qt::ALT | Qt::Key_Up), [this]() { adjustPitch(1.0); });
+    addAppShortcut(QKeySequence(Qt::ALT | Qt::Key_Down), [this]() { adjustPitch(-1.0); });
+    addAppShortcut(QKeySequence(Qt::ALT | Qt::Key_0), [this]() { adjustPitch(0.0); });
+
+    // 10. Chapters & Bookmarks Navigation
+    addAppShortcut(QKeySequence(Qt::Key_PageDown), [this]() { nextChapter(); });
+    addAppShortcut(QKeySequence(Qt::Key_PageUp), [this]() { previousChapter(); });
+    addAppShortcut(QKeySequence(Qt::Key_B), [this]() { addBookmark(); });
+    addAppShortcut(QKeySequence(Qt::SHIFT | Qt::Key_B), [this]() { nextBookmark(); });
+
+    // 11. Forensic Screenshots
+    addAppShortcut(QKeySequence(Qt::Key_S), [this]() { takeScreenshot(false); });
+    addAppShortcut(QKeySequence(Qt::SHIFT | Qt::Key_S), [this]() { takeScreenshot(true); });
+
+    // 12. Fullscreen & Mode
     addAppShortcut(QKeySequence(Qt::Key_F), [this]() { toggleFullscreen(); });
     addAppShortcut(QKeySequence(Qt::Key_F11), [this]() { toggleFullscreen(); });
     addAppShortcut(QKeySequence(Qt::Key_Tab), [this]() { toggleMode(); });
 
-    // 8. OSD & Reticles
+    // 13. OSD & Reticles
     addAppShortcut(QKeySequence(Qt::Key_O), [this]() { if (m_viewfinder) m_viewfinder->toggleOsd(); });
     addAppShortcut(QKeySequence(Qt::Key_R), [this]() { if (m_viewfinder) m_viewfinder->toggleReticles(); });
 
-    // 9. Quit
+    // 14. Quit
     addAppShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), [this]() { close(); });
 }
 
@@ -148,31 +185,73 @@ bool MainWindow::openMedia(const QString &filePath, bool autoPlay)
 {
     if (filePath.isEmpty()) return false;
 
-    QFileInfo fi(filePath);
-    if (!fi.exists()) return false;
+    bool isNetworkUrl = filePath.startsWith("http://", Qt::CaseInsensitive) ||
+                        filePath.startsWith("https://", Qt::CaseInsensitive) ||
+                        filePath.startsWith("rtmp://", Qt::CaseInsensitive) ||
+                        filePath.startsWith("ytdl://", Qt::CaseInsensitive);
 
-    QString ext = fi.suffix().toLower();
+    QString ext;
+    QString title;
 
-    // Sidecar subtitle / lyric handling
-    if (ext == "lrc") {
-        m_engine->loadExternalLrc(filePath);
-        return true;
-    } else if (ext == "srt" || ext == "ass" || ext == "ssa" || ext == "vtt") {
-        m_engine->loadExternalSubtitle(filePath);
-        return true;
-    }
-
-    // Auto-detect mode based on media format extension
-    static const QStringList audioExts = {"mp3", "flac", "wav", "opus", "ogg", "m4a", "aac", "alac", "aiff", "dsd"};
-    if (audioExts.contains(ext)) {
-        setMode(UIMode::HiFiAudioDeck);
-    } else {
+    if (isNetworkUrl) {
+        ext = "STREAM";
+        title = filePath;
         setMode(UIMode::VideoViewfinder);
+    } else {
+        QFileInfo fi(filePath);
+        if (!fi.exists()) return false;
+
+        ext = fi.suffix().toLower();
+        title = fi.baseName();
+
+        // Sidecar subtitle / lyric handling
+        if (ext == "lrc") {
+            m_engine->loadExternalLrc(filePath);
+            return true;
+        } else if (ext == "srt" || ext == "ass" || ext == "ssa" || ext == "vtt") {
+            m_engine->loadExternalSubtitle(filePath);
+            return true;
+        }
+
+        // Auto-detect mode based on media format extension
+        static const QStringList audioExts = {"mp3", "flac", "wav", "opus", "ogg", "m4a", "aac", "alac", "aiff", "dsd"};
+        if (audioExts.contains(ext)) {
+            setMode(UIMode::HiFiAudioDeck);
+        } else {
+            setMode(UIMode::VideoViewfinder);
+        }
     }
 
-    // Add to playlist matrix queue
-    m_audioDeck->playlistMatrix()->addItem(filePath, fi.baseName(), "", "", 0, ext.toUpper());
-    m_audioDeck->playlistMatrix()->setCurrentIndex(m_audioDeck->playlistMatrix()->count() - 1);
+    // Add to playlist manager / playlist matrix if not already there or update index
+    if (m_playlistMgr) {
+        bool found = false;
+        const auto &items = m_playlistMgr->items();
+        for (int i = 0; i < items.size(); ++i) {
+            if (items[i].filePath == filePath) {
+                m_playlistMgr->setCurrentIndex(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            m_playlistMgr->addItem(filePath, title, "", "", 0, isNetworkUrl ? "STREAM" : ext.toUpper());
+            m_playlistMgr->setCurrentIndex(m_playlistMgr->count() - 1);
+        }
+    } else if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+        bool foundInMatrix = false;
+        const auto &matrixItems = m_audioDeck->playlistMatrix()->items();
+        for (int i = 0; i < matrixItems.size(); ++i) {
+            if (matrixItems[i].filePath == filePath) {
+                m_audioDeck->playlistMatrix()->setCurrentIndex(i);
+                foundInMatrix = true;
+                break;
+            }
+        }
+        if (!foundInMatrix) {
+            m_audioDeck->playlistMatrix()->addItem(filePath, title, "", "", 0, isNetworkUrl ? "STREAM" : ext.toUpper());
+            m_audioDeck->playlistMatrix()->setCurrentIndex(m_audioDeck->playlistMatrix()->count() - 1);
+        }
+    }
 
     bool ok = m_engine->loadMedia(filePath, autoPlay);
     return ok;
@@ -184,6 +263,15 @@ void MainWindow::openDirectory(const QString &dirPath)
 
     QDir dir(dirPath);
     if (!dir.exists()) return;
+
+    if (m_playlistMgr) {
+        int initialCount = m_playlistMgr->count();
+        m_playlistMgr->addDirectory(dirPath, true);
+        if (m_playlistMgr->count() > initialCount) {
+            m_playlistMgr->setCurrentIndex(initialCount);
+        }
+        return;
+    }
 
     static const QStringList filters = {
         "*.mp4", "*.mkv", "*.webm", "*.avi", "*.mov", "*.ts", "*.flv",
@@ -199,7 +287,9 @@ void MainWindow::openDirectory(const QString &dirPath)
             first = false;
         } else {
             QFileInfo fi(file);
-            m_audioDeck->playlistMatrix()->addItem(file, fi.baseName(), "", "", 0, fi.suffix().toUpper());
+            if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+                m_audioDeck->playlistMatrix()->addItem(file, fi.baseName(), "", "", 0, fi.suffix().toUpper());
+            }
         }
     }
 }
@@ -218,6 +308,255 @@ void MainWindow::openDirectoryDialog()
     QString dirPath = QFileDialog::getExistingDirectory(this, "Open Media Folder", QString());
     if (!dirPath.isEmpty()) {
         openDirectory(dirPath);
+    }
+}
+
+void MainWindow::openUrlDialog()
+{
+    bool ok = false;
+    QString url = QInputDialog::getText(this, "OPEN STREAM URL", "Enter Network URL / YouTube / Twitch / HLS Stream:", QLineEdit::Normal, "", &ok);
+    if (ok && !url.trimmed().isEmpty()) {
+        openMedia(url.trimmed(), true);
+        showOsdMessage("STREAM INGESTED // " + url.trimmed());
+    }
+}
+
+void MainWindow::takeScreenshot(bool includeSubtitles)
+{
+    if (!m_engine) return;
+    bool success = m_engine->takeScreenshot(QString(), includeSubtitles);
+    if (success) {
+        showOsdMessage(QString("SCREENSHOT SAVED [%1]").arg(includeSubtitles ? "WITH SUBTITLES" : "CLEAN FRAME"));
+    }
+}
+
+void MainWindow::setLoopPointA()
+{
+    if (!m_engine) return;
+    m_engine->setLoopPointA();
+    showOsdMessage(QString("LOOP POINT [A] SET // %1").arg(m_engine->smptePosition()));
+}
+
+void MainWindow::setLoopPointB()
+{
+    if (!m_engine) return;
+    m_engine->setLoopPointB();
+    showOsdMessage(QString("LOOP POINT [B] SET // %1 (ACTIVE)").arg(m_engine->smptePosition()));
+}
+
+void MainWindow::clearLoop()
+{
+    if (!m_engine) return;
+    m_engine->clearLoop();
+    showOsdMessage("A-B LOOP CLEARED");
+}
+
+void MainWindow::adjustSubtitleDelay(int deltaMs)
+{
+    if (!m_engine) return;
+    m_engine->adjustSubtitleDelayMs(deltaMs);
+    showOsdMessage(QString("SUBTITLE OFFSET: %1%2 ms").arg(m_engine->subtitleDelayMs() > 0 ? "+" : "").arg(m_engine->subtitleDelayMs()));
+}
+
+void MainWindow::adjustAudioDelay(int deltaMs)
+{
+    if (!m_engine) return;
+    m_engine->adjustAudioDelayMs(deltaMs);
+    showOsdMessage(QString("AUDIO OFFSET: %1%2 ms").arg(m_engine->audioDelayMs() > 0 ? "+" : "").arg(m_engine->audioDelayMs()));
+}
+
+void MainWindow::toggleNightMode()
+{
+    if (!m_engine) return;
+    bool newState = !m_engine->isNightMode();
+    m_engine->setNightMode(newState);
+    showOsdMessage(QString("NIGHT COMPRESSOR: %1").arg(newState ? "ACTIVE [ENGAGED]" : "BYPASSED"));
+}
+
+void MainWindow::toggleDeband()
+{
+    if (!m_engine) return;
+    bool newState = !m_engine->isDebandEnabled();
+    m_engine->setDebandEnabled(newState);
+    showOsdMessage(QString("DEBAND DITHERING: %1").arg(newState ? "ENABLED" : "DISABLED"));
+}
+
+void MainWindow::cycleAspectRatio()
+{
+    if (!m_engine) return;
+    QString current = m_engine->aspectRatio();
+    QString next = "auto";
+    if (current == "auto" || current == "-1") next = "16:9";
+    else if (current == "16:9") next = "4:3";
+    else if (current == "4:3") next = "21:9";
+    else if (current == "21:9") next = "2.35:1";
+    else next = "auto";
+
+    m_engine->setAspectRatio(next);
+    showOsdMessage(QString("ASPECT RATIO: %1").arg(next.toUpper()));
+}
+
+void MainWindow::toggleCrossfeed()
+{
+    if (!m_engine) return;
+    bool newState = !m_engine->isCrossfeedEnabled();
+    m_engine->setCrossfeedEnabled(newState);
+    showOsdMessage(QString("HEADPHONE CROSSFEED (BS2B): %1").arg(newState ? "ACTIVE [ENGAGED]" : "BYPASSED"));
+}
+
+void MainWindow::togglePipMode()
+{
+    m_isPip = !m_isPip;
+    if (m_isPip) {
+        m_savedGeometry = geometry();
+        setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+        if (m_viewfinder) {
+            m_viewfinder->setOsdVisible(false);
+            m_viewfinder->setReticlesVisible(false);
+        }
+        resize(400, 225);
+        show();
+        showOsdMessage("PICTURE-IN-PICTURE (PIP) // PINNED ON TOP");
+    } else {
+        setWindowFlags(Qt::Window);
+        if (m_savedGeometry.isValid()) {
+            setGeometry(m_savedGeometry);
+        }
+        show();
+        showOsdMessage("PICTURE-IN-PICTURE (PIP) // RESTORED");
+    }
+}
+
+void MainWindow::cycleSecondarySubtitle()
+{
+    if (!m_engine) return;
+    m_engine->cycleSecondarySubtitle();
+    int sid = m_engine->selectedSecondarySubtitleTrackId();
+    showOsdMessage(QString("SECONDARY SUBTITLE: %1").arg(sid > 0 ? QString("TRACK %1").arg(sid) : "OFF"));
+}
+
+void MainWindow::addBookmark()
+{
+    if (!m_engine) return;
+    qint64 pos = m_engine->positionMs();
+    m_engine->addBookmark(pos);
+    showOsdMessage(QString("BOOKMARK ADDED @ %1").arg(Core::TimecodeFormatter::formatTimecode(pos, 30.0)));
+}
+
+void MainWindow::nextBookmark()
+{
+    if (!m_engine) return;
+    m_engine->nextBookmark();
+    qint64 pos = m_engine->positionMs();
+    showOsdMessage(QString("JUMP TO BOOKMARK @ %1").arg(Core::TimecodeFormatter::formatTimecode(pos, 30.0)));
+}
+
+void MainWindow::adjustPitch(double deltaSemitones)
+{
+    if (!m_engine) return;
+    if (qFuzzyIsNull(deltaSemitones)) {
+        m_engine->setPitch(0.0);
+        showOsdMessage("PITCH SHIFT // RESET TO NORMAL (0 ST)");
+    } else {
+        m_engine->adjustPitch(deltaSemitones);
+        double p = m_engine->pitch();
+        showOsdMessage(QString("PITCH SHIFT // %1%2 SEMITONES").arg(p > 0 ? "+" : "").arg(p, 0, 'f', 1));
+    }
+}
+
+void MainWindow::nextChapter()
+{
+    if (!m_engine) return;
+    m_engine->nextChapter();
+    QString title = m_engine->currentChapterTitle();
+    showOsdMessage(QString("CHAPTER NEXT // %1").arg(title.isEmpty() ? "NEXT" : title));
+}
+
+void MainWindow::previousChapter()
+{
+    if (!m_engine) return;
+    m_engine->previousChapter();
+    QString title = m_engine->currentChapterTitle();
+    showOsdMessage(QString("CHAPTER PREV // %1").arg(title.isEmpty() ? "PREV" : title));
+}
+
+void MainWindow::openVideoEqualizerDialog()
+{
+    if (!m_engine) return;
+    auto *dlg = new QDialog(this);
+    dlg->setWindowTitle("VIDEO EQUALIZER // COLOR SCIENCE");
+    dlg->setFixedWidth(360);
+    dlg->setStyleSheet(BrutalistTheme::globalStyleSheet());
+
+    auto *layout = new QVBoxLayout(dlg);
+    layout->setContentsMargins(16, 16, 16, 16);
+    layout->setSpacing(12);
+
+    auto *header = new QLabel("VIDEO COLOR EQUALIZER", dlg);
+    header->setFont(BrutalistTheme::monospaceFont(10, QFont::Bold));
+    header->setStyleSheet("color: #FF4400; border-bottom: 1px solid #1E1E24; padding-bottom: 6px;");
+    layout->addWidget(header);
+
+    auto makeSliderRow = [dlg](const QString &label, int currentVal, auto callback) {
+        auto *row = new QHBoxLayout();
+        auto *lbl = new QLabel(label, dlg);
+        lbl->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
+        lbl->setFixedWidth(90);
+        lbl->setStyleSheet("color: #E2E2EA;");
+
+        auto *valLbl = new QLabel(QString("%1%2").arg(currentVal > 0 ? "+" : "").arg(currentVal), dlg);
+        valLbl->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+        valLbl->setFixedWidth(40);
+        valLbl->setStyleSheet("color: #00E5FF;");
+
+        auto *slider = new QSlider(Qt::Horizontal, dlg);
+        slider->setRange(-100, 100);
+        slider->setValue(currentVal);
+
+        QObject::connect(slider, &QSlider::valueChanged, dlg, [valLbl, callback](int v) {
+            valLbl->setText(QString("%1%2").arg(v > 0 ? "+" : "").arg(v));
+            callback(v);
+        });
+
+        row->addWidget(lbl);
+        row->addWidget(slider, 1);
+        row->addWidget(valLbl);
+        return row;
+    };
+
+    layout->addLayout(makeSliderRow("BRIGHTNESS", m_engine->backend()->brightness(), [this](int v) { m_engine->setBrightness(v); }));
+    layout->addLayout(makeSliderRow("CONTRAST", m_engine->backend()->contrast(), [this](int v) { m_engine->setContrast(v); }));
+    layout->addLayout(makeSliderRow("GAMMA", m_engine->backend()->gamma(), [this](int v) { m_engine->setGamma(v); }));
+    layout->addLayout(makeSliderRow("SATURATION", m_engine->backend()->saturation(), [this](int v) { m_engine->setSaturation(v); }));
+    layout->addLayout(makeSliderRow("HUE", m_engine->backend()->hue(), [this](int v) { m_engine->setHue(v); }));
+
+    auto *btnRow = new QHBoxLayout();
+    auto *resetBtn = new QPushButton("FLAT RESET", dlg);
+    resetBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    connect(resetBtn, &QPushButton::clicked, dlg, [this, dlg]() {
+        m_engine->resetVideoEqualizer();
+        dlg->close();
+        showOsdMessage("VIDEO EQUALIZER RESET TO FLAT");
+    });
+
+    auto *closeBtn = new QPushButton("CLOSE", dlg);
+    closeBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    closeBtn->setStyleSheet(BrutalistTheme::accentLimeButtonStyleSheet());
+    connect(closeBtn, &QPushButton::clicked, dlg, &QDialog::accept);
+
+    btnRow->addWidget(resetBtn);
+    btnRow->addWidget(closeBtn);
+    layout->addLayout(btnRow);
+
+    dlg->exec();
+    dlg->deleteLater();
+}
+
+void MainWindow::showOsdMessage(const QString &message, int durationMs)
+{
+    statusBar()->showMessage(message, durationMs);
+    if (m_viewfinder && m_viewfinder->videoSurface()) {
+        m_viewfinder->videoSurface()->setMediaTitle(message);
     }
 }
 
@@ -376,24 +715,46 @@ void MainWindow::dropEvent(QDropEvent *event)
     bool first = true;
 
     for (const QUrl &url : urls) {
-        if (!url.isLocalFile()) continue;
-        QString localPath = url.toLocalFile();
-        QFileInfo fi(localPath);
+        if (url.isLocalFile()) {
+            QString localPath = url.toLocalFile();
+            QFileInfo fi(localPath);
 
-        if (fi.isDir()) {
-            openDirectory(localPath);
-        } else if (fi.isFile()) {
-            if (first) {
-                openMedia(localPath, true);
-                first = false;
-            } else {
-                QString ext = fi.suffix().toLower();
-                if (ext == "lrc") {
-                    m_engine->loadExternalLrc(localPath);
-                } else if (ext == "srt" || ext == "ass" || ext == "vtt") {
-                    m_engine->loadExternalSubtitle(localPath);
+            if (fi.isDir()) {
+                openDirectory(localPath);
+            } else if (fi.isFile()) {
+                if (first) {
+                    openMedia(localPath, true);
+                    first = false;
                 } else {
-                    m_audioDeck->playlistMatrix()->addItem(localPath, fi.baseName(), "", "", 0, ext.toUpper());
+                    QString ext = fi.suffix().toLower();
+                    if (ext == "lrc") {
+                        m_engine->loadExternalLrc(localPath);
+                    } else if (ext == "srt" || ext == "ass" || ext == "vtt") {
+                        m_engine->loadExternalSubtitle(localPath);
+                    } else {
+                        if (m_playlistMgr) {
+                            m_playlistMgr->addItem(localPath, fi.baseName(), "", "", 0, ext.toUpper());
+                        } else if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+                            m_audioDeck->playlistMatrix()->addItem(localPath, fi.baseName(), "", "", 0, ext.toUpper());
+                        }
+                    }
+                }
+            }
+        } else {
+            QString urlStr = url.toString();
+            if (urlStr.startsWith("http://", Qt::CaseInsensitive) ||
+                urlStr.startsWith("https://", Qt::CaseInsensitive) ||
+                urlStr.startsWith("rtmp://", Qt::CaseInsensitive) ||
+                urlStr.startsWith("ytdl://", Qt::CaseInsensitive)) {
+                if (first) {
+                    openMedia(urlStr, true);
+                    first = false;
+                } else {
+                    if (m_playlistMgr) {
+                        m_playlistMgr->addItem(urlStr, urlStr, "", "", 0, "STREAM");
+                    } else if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+                        m_audioDeck->playlistMatrix()->addItem(urlStr, urlStr, "", "", 0, "STREAM");
+                    }
                 }
             }
         }
@@ -419,7 +780,7 @@ void MainWindow::onEngineErrorOccurred(const QString &errorMessage)
 
 void MainWindow::onEngineMediaFinished()
 {
-    if (m_playlistMgr) {
+    if (m_playlistMgr && m_playlistMgr->count() > 0) {
         m_playlistMgr->next();
     } else if (m_audioDeck) {
         m_audioDeck->nextTrack();
@@ -437,10 +798,21 @@ void MainWindow::setStatePersistence(Library::StatePersistence *persistence)
 void MainWindow::setPlaylistManager(Library::PlaylistManager *playlistMgr)
 {
     m_playlistMgr = playlistMgr;
+    if (m_audioDeck) {
+        m_audioDeck->setPlaylistManager(m_playlistMgr);
+    }
     if (m_playlistMgr) {
         connect(m_playlistMgr, &Library::PlaylistManager::currentTrackChanged, this, [this](int, const UI::PlaylistItem &item) {
             openMedia(item.filePath, true);
         });
+        connect(m_playlistMgr, &Library::PlaylistManager::playlistUpdated, this, [this]() {
+            if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+                m_audioDeck->playlistMatrix()->setItems(m_playlistMgr->items(), m_playlistMgr->currentIndex());
+            }
+        });
+        if (m_audioDeck && m_audioDeck->playlistMatrix()) {
+            m_audioDeck->playlistMatrix()->setItems(m_playlistMgr->items(), m_playlistMgr->currentIndex());
+        }
     }
 }
 

@@ -24,6 +24,11 @@ VideoSurfaceWidget::VideoSurfaceWidget(QWidget *parent)
     setAttribute(Qt::WA_NoSystemBackground, true);
     setFocusPolicy(Qt::StrongFocus);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setMouseTracking(true);
+
+    m_singleClickTimer.setSingleShot(true);
+    m_singleClickTimer.setInterval(250);
+    connect(&m_singleClickTimer, &QTimer::timeout, this, &VideoSurfaceWidget::clicked);
 }
 
 void VideoSurfaceWidget::setPlaybackEngine(Core::PlaybackEngine *engine)
@@ -137,7 +142,7 @@ void VideoSurfaceWidget::paintEvent(QPaintEvent * /*event*/)
 void VideoSurfaceWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        emit clicked();
+        m_singleClickTimer.start(250);
     }
     QWidget::mousePressEvent(event);
 }
@@ -145,9 +150,47 @@ void VideoSurfaceWidget::mousePressEvent(QMouseEvent *event)
 void VideoSurfaceWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
+        m_singleClickTimer.stop();
         emit doubleClicked();
     }
     QWidget::mouseDoubleClickEvent(event);
+}
+
+void VideoSurfaceWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    emit mouseMoved();
+    QWidget::mouseMoveEvent(event);
+}
+
+void VideoSurfaceWidget::wheelEvent(QWheelEvent *event)
+{
+    if (!m_engine) {
+        QWidget::wheelEvent(event);
+        return;
+    }
+
+    int numDegrees = event->angleDelta().y() / 8;
+    int numSteps = numDegrees / 15;
+    if (numSteps == 0 && numDegrees != 0) {
+        numSteps = (numDegrees > 0) ? 1 : -1;
+    }
+
+    Qt::KeyboardModifiers mods = event->modifiers();
+    if (mods & Qt::ControlModifier) {
+        // Ctrl + Scroll = +/-10s seek
+        qint64 seekMs = numSteps * 10000;
+        m_engine->seekRelative(seekMs);
+    } else if (mods & Qt::ShiftModifier) {
+        // Shift + Scroll = single frame step
+        m_engine->frameStep(numSteps > 0 ? 1 : -1);
+    } else {
+        // Vertical scroll = volume +/- 2%
+        int curVol = m_engine->volume();
+        int newVol = std::clamp(curVol + numSteps * 2, 0, 100);
+        m_engine->setVolume(newVol);
+    }
+
+    event->accept();
 }
 
 // ----------------------------------------------------------------------------
@@ -158,6 +201,11 @@ ViewfinderWidget::ViewfinderWidget(Core::PlaybackEngine *engine, QWidget *parent
     : QWidget(parent)
     , m_engine(engine)
 {
+    setMouseTracking(true);
+    m_autohideTimer.setInterval(2500);
+    m_autohideTimer.setSingleShot(true);
+    connect(&m_autohideTimer, &QTimer::timeout, this, &ViewfinderWidget::onAutohideTimeout);
+
     setupUI();
     if (m_engine) {
         connectEngineSignals();
@@ -172,49 +220,49 @@ void ViewfinderWidget::setupUI()
     mainLayout->setSpacing(0);
 
     // 1. Top Header Bar
-    auto *headerWidget = new QWidget(this);
-    headerWidget->setFixedHeight(32);
-    headerWidget->setStyleSheet("background-color: #0B0B0E; border-bottom: 1px solid #1E1E24;");
-    auto *headerLayout = new QHBoxLayout(headerWidget);
+    m_headerWidget = new QWidget(this);
+    m_headerWidget->setFixedHeight(32);
+    m_headerWidget->setStyleSheet("background-color: #0B0B0E; border-bottom: 1px solid #1E1E24;");
+    auto *headerLayout = new QHBoxLayout(m_headerWidget);
     headerLayout->setContentsMargins(8, 0, 8, 0);
     headerLayout->setSpacing(8);
 
-    auto *modeTag = new QLabel("[MODE: VIDEO VIEWFINDER]", headerWidget);
+    auto *modeTag = new QLabel("[MODE: VIDEO VIEWFINDER]", m_headerWidget);
     modeTag->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     modeTag->setStyleSheet("color: #FF4400; border: none; background: transparent;");
     headerLayout->addWidget(modeTag);
 
-    m_titleLabel = new QLabel("NO MEDIA LOADED", headerWidget);
+    m_titleLabel = new QLabel("NO MEDIA LOADED", m_headerWidget);
     m_titleLabel->setFont(BrutalistTheme::sansFont(9, QFont::Bold));
     m_titleLabel->setStyleSheet("color: #FFFFFF; border: none; background: transparent;");
     headerLayout->addWidget(m_titleLabel, 1);
 
-    m_reticleToggleBtn = new QPushButton("RETICLE [R]", headerWidget);
+    m_reticleToggleBtn = new QPushButton("RETICLE [R]", m_headerWidget);
     m_reticleToggleBtn->setCheckable(true);
     m_reticleToggleBtn->setChecked(true);
     m_reticleToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     connect(m_reticleToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::toggleReticles);
     headerLayout->addWidget(m_reticleToggleBtn);
 
-    m_osdToggleBtn = new QPushButton("OSD [O]", headerWidget);
+    m_osdToggleBtn = new QPushButton("OSD [O]", m_headerWidget);
     m_osdToggleBtn->setCheckable(true);
     m_osdToggleBtn->setChecked(true);
     m_osdToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     connect(m_osdToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::toggleOsd);
     headerLayout->addWidget(m_osdToggleBtn);
 
-    m_fsToggleBtn = new QPushButton("FULLSCREEN [F]", headerWidget);
+    m_fsToggleBtn = new QPushButton("FULLSCREEN [F]", m_headerWidget);
     m_fsToggleBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     connect(m_fsToggleBtn, &QPushButton::clicked, this, &ViewfinderWidget::fullscreenToggleRequested);
     headerLayout->addWidget(m_fsToggleBtn);
 
-    m_switchModeBtn = new QPushButton("AUDIO DECK [TAB]", headerWidget);
+    m_switchModeBtn = new QPushButton("AUDIO DECK [TAB]", m_headerWidget);
     m_switchModeBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_switchModeBtn->setStyleSheet(BrutalistTheme::accentLimeButtonStyleSheet());
     connect(m_switchModeBtn, &QPushButton::clicked, this, &ViewfinderWidget::switchModeRequested);
     headerLayout->addWidget(m_switchModeBtn);
 
-    mainLayout->addWidget(headerWidget);
+    mainLayout->addWidget(m_headerWidget);
 
     // 2. Video Viewport Surface & Diagnostics HUD Container
     auto *viewportContainer = new QWidget(this);
@@ -242,29 +290,29 @@ void ViewfinderWidget::setupUI()
     mainLayout->addWidget(m_scrubber);
 
     // 4. Tactile Bottom Control Dock
-    auto *dockWidget = new QWidget(this);
-    dockWidget->setFixedHeight(44);
-    dockWidget->setStyleSheet("background-color: #0B0B0E; border-top: 1px solid #1E1E24;");
-    auto *dockLayout = new QHBoxLayout(dockWidget);
+    m_dockWidget = new QWidget(this);
+    m_dockWidget->setFixedHeight(44);
+    m_dockWidget->setStyleSheet("background-color: #0B0B0E; border-top: 1px solid #1E1E24;");
+    auto *dockLayout = new QHBoxLayout(m_dockWidget);
     dockLayout->setContentsMargins(8, 4, 8, 4);
     dockLayout->setSpacing(6);
 
     // Transport buttons
-    m_stepBackBtn = new QPushButton("|< 1F", dockWidget);
+    m_stepBackBtn = new QPushButton("|< 1F", m_dockWidget);
     m_stepBackBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_stepBackBtn->setToolTip("Step Backward 1 Frame (,)");
     m_stepBackBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stepBackBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStepBackwardClicked);
     dockLayout->addWidget(m_stepBackBtn);
 
-    m_jumpBackBtn = new QPushButton("-10s", dockWidget);
+    m_jumpBackBtn = new QPushButton("-10s", m_dockWidget);
     m_jumpBackBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_jumpBackBtn->setToolTip("Jump Backward 10 Seconds (Left Arrow)");
     m_jumpBackBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_jumpBackBtn, &QPushButton::clicked, this, &ViewfinderWidget::onJumpBackwardClicked);
     dockLayout->addWidget(m_jumpBackBtn);
 
-    m_playPauseBtn = new QPushButton("> PLAY", dockWidget);
+    m_playPauseBtn = new QPushButton("> PLAY", m_dockWidget);
     m_playPauseBtn->setFont(BrutalistTheme::monospaceFont(9, QFont::Bold));
     m_playPauseBtn->setStyleSheet(BrutalistTheme::accentOrangeButtonStyleSheet());
     m_playPauseBtn->setToolTip("Toggle Play/Pause (Space)");
@@ -272,36 +320,81 @@ void ViewfinderWidget::setupUI()
     connect(m_playPauseBtn, &QPushButton::clicked, this, &ViewfinderWidget::onPlayPauseClicked);
     dockLayout->addWidget(m_playPauseBtn);
 
-    m_jumpFwdBtn = new QPushButton("+10s", dockWidget);
+    m_jumpFwdBtn = new QPushButton("+10s", m_dockWidget);
     m_jumpFwdBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_jumpFwdBtn->setToolTip("Jump Forward 10 Seconds (Right Arrow)");
     m_jumpFwdBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_jumpFwdBtn, &QPushButton::clicked, this, &ViewfinderWidget::onJumpForwardClicked);
     dockLayout->addWidget(m_jumpFwdBtn);
 
-    m_stepFwdBtn = new QPushButton("1F >|", dockWidget);
+    m_stepFwdBtn = new QPushButton("1F >|", m_dockWidget);
     m_stepFwdBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_stepFwdBtn->setToolTip("Step Forward 1 Frame (.)");
     m_stepFwdBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stepFwdBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStepForwardClicked);
     dockLayout->addWidget(m_stepFwdBtn);
 
-    m_stopBtn = new QPushButton("[] STOP", dockWidget);
+    m_stopBtn = new QPushButton("[] STOP", m_dockWidget);
     m_stopBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_stopBtn->setToolTip("Stop Playback");
     m_stopBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_stopBtn, &QPushButton::clicked, this, &ViewfinderWidget::onStopClicked);
     dockLayout->addWidget(m_stopBtn);
 
+    m_shotBtn = new QPushButton("SHOT", m_dockWidget);
+    m_shotBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_shotBtn->setToolTip("Take Forensic Screenshot (S / Shift+S)");
+    m_shotBtn->setFocusPolicy(Qt::NoFocus);
+    connect(m_shotBtn, &QPushButton::clicked, this, [this]() {
+        if (m_engine) m_engine->takeScreenshot();
+    });
+    dockLayout->addWidget(m_shotBtn);
+
+    m_loopBtn = new QPushButton("A-B", m_dockWidget);
+    m_loopBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_loopBtn->setToolTip("A-B Looper: Press [ for A, ] for B, \\ to clear");
+    m_loopBtn->setFocusPolicy(Qt::NoFocus);
+    connect(m_loopBtn, &QPushButton::clicked, this, [this]() {
+        if (!m_engine) return;
+        if (!m_engine->isLoopActive()) {
+            if (m_engine->loopPointA() < 0) {
+                m_engine->setLoopPointA();
+                m_loopBtn->setText("A:SET");
+                m_loopBtn->setStyleSheet(BrutalistTheme::accentOrangeButtonStyleSheet());
+            } else {
+                m_engine->setLoopPointB();
+                m_loopBtn->setText("A-B:ON");
+                m_loopBtn->setStyleSheet(BrutalistTheme::accentLimeButtonStyleSheet());
+            }
+        } else {
+            m_engine->clearLoop();
+            m_loopBtn->setText("A-B");
+            m_loopBtn->setStyleSheet("");
+        }
+    });
+    dockLayout->addWidget(m_loopBtn);
+
+    m_nightBtn = new QPushButton("NIGHT", m_dockWidget);
+    m_nightBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    m_nightBtn->setToolTip("Toggle Night Mode Dynamic Dialogue Compressor (N)");
+    m_nightBtn->setFocusPolicy(Qt::NoFocus);
+    connect(m_nightBtn, &QPushButton::clicked, this, [this]() {
+        if (!m_engine) return;
+        bool next = !m_engine->isNightMode();
+        m_engine->setNightMode(next);
+        m_nightBtn->setStyleSheet(next ? BrutalistTheme::accentLimeButtonStyleSheet() : "");
+    });
+    dockLayout->addWidget(m_nightBtn);
+
     dockLayout->addSpacing(10);
 
     // Speed selector
-    auto *speedLabel = new QLabel("RATE:", dockWidget);
+    auto *speedLabel = new QLabel("RATE:", m_dockWidget);
     speedLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     speedLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(speedLabel);
 
-    m_speedCombo = new QComboBox(dockWidget);
+    m_speedCombo = new QComboBox(m_dockWidget);
     m_speedCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     m_speedCombo->addItems({"0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "1.75x", "2.0x"});
     m_speedCombo->setCurrentText("1.0x");
@@ -312,12 +405,12 @@ void ViewfinderWidget::setupUI()
     dockLayout->addSpacing(10);
 
     // Audio stream selector
-    auto *audLabel = new QLabel("AUD:", dockWidget);
+    auto *audLabel = new QLabel("AUD:", m_dockWidget);
     audLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     audLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(audLabel);
 
-    m_audioTrackCombo = new QComboBox(dockWidget);
+    m_audioTrackCombo = new QComboBox(m_dockWidget);
     m_audioTrackCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     m_audioTrackCombo->addItem("Track 1 (Default)", 1);
     m_audioTrackCombo->setFocusPolicy(Qt::NoFocus);
@@ -325,12 +418,12 @@ void ViewfinderWidget::setupUI()
     dockLayout->addWidget(m_audioTrackCombo);
 
     // Subtitle stream selector
-    auto *subLabel = new QLabel("SUB:", dockWidget);
+    auto *subLabel = new QLabel("SUB:", m_dockWidget);
     subLabel->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     subLabel->setStyleSheet("color: #777788;");
     dockLayout->addWidget(subLabel);
 
-    m_subTrackCombo = new QComboBox(dockWidget);
+    m_subTrackCombo = new QComboBox(m_dockWidget);
     m_subTrackCombo->setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));
     m_subTrackCombo->addItem("None", -1);
     m_subTrackCombo->setFocusPolicy(Qt::NoFocus);
@@ -340,14 +433,14 @@ void ViewfinderWidget::setupUI()
     dockLayout->addStretch(1);
 
     // Volume & Mute
-    m_muteBtn = new QPushButton("VOL", dockWidget);
+    m_muteBtn = new QPushButton("VOL", m_dockWidget);
     m_muteBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
     m_muteBtn->setFixedWidth(44);
     m_muteBtn->setFocusPolicy(Qt::NoFocus);
     connect(m_muteBtn, &QPushButton::clicked, this, &ViewfinderWidget::onMuteClicked);
     dockLayout->addWidget(m_muteBtn);
 
-    m_volumeSlider = new QSlider(Qt::Horizontal, dockWidget);
+    m_volumeSlider = new QSlider(Qt::Horizontal, m_dockWidget);
     m_volumeSlider->setRange(0, 100);
     m_volumeSlider->setValue(85);
     m_volumeSlider->setFixedWidth(80);
@@ -361,7 +454,10 @@ void ViewfinderWidget::setupUI()
     m_fsToggleBtn->setFocusPolicy(Qt::NoFocus);
     m_switchModeBtn->setFocusPolicy(Qt::NoFocus);
 
-    mainLayout->addWidget(dockWidget);
+    mainLayout->addWidget(m_dockWidget);
+
+    m_videoSurface->installEventFilter(this);
+    connect(m_videoSurface, &VideoSurfaceWidget::mouseMoved, this, &ViewfinderWidget::resetAutohideTimer);
 
     // Scrubber seek request connection
     connect(m_scrubber, &TickScrubberWidget::seekRequested, this, [this](qint64 ms) {
@@ -540,10 +636,106 @@ void ViewfinderWidget::onEnginePlaybackStateChanged(Core::PlaybackState state)
     if (state == Core::PlaybackState::Playing) {
         m_playPauseBtn->setText("|| PAUSE");
         m_playPauseBtn->setStyleSheet(BrutalistTheme::accentOrangeButtonStyleSheet());
+        resetAutohideTimer();
     } else {
         m_playPauseBtn->setText("> PLAY");
         m_playPauseBtn->setStyleSheet(BrutalistTheme::accentLimeButtonStyleSheet());
+        m_autohideTimer.stop();
+        setHeaderAndDocksVisible(true);
+        setCursor(Qt::ArrowCursor);
+        if (m_videoSurface) {
+            m_videoSurface->setCursor(Qt::ArrowCursor);
+        }
     }
+}
+
+bool ViewfinderWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove) {
+        resetAutohideTimer();
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+void ViewfinderWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    resetAutohideTimer();
+    QWidget::mouseMoveEvent(event);
+}
+
+void ViewfinderWidget::wheelEvent(QWheelEvent *event)
+{
+    resetAutohideTimer();
+    if (!m_engine) {
+        QWidget::wheelEvent(event);
+        return;
+    }
+
+    int numDegrees = event->angleDelta().y() / 8;
+    int numSteps = numDegrees / 15;
+    if (numSteps == 0 && numDegrees != 0) {
+        numSteps = (numDegrees > 0) ? 1 : -1;
+    }
+
+    Qt::KeyboardModifiers mods = event->modifiers();
+    if (mods & Qt::ControlModifier) {
+        // Ctrl + Scroll = +/-10s seek
+        qint64 seekMs = numSteps * 10000;
+        m_engine->seekRelative(seekMs);
+    } else if (mods & Qt::ShiftModifier) {
+        // Shift + Scroll = single frame step
+        m_engine->frameStep(numSteps > 0 ? 1 : -1);
+    } else {
+        // Vertical scroll = volume +/- 2%
+        int curVol = m_engine->volume();
+        int newVol = std::clamp(curVol + numSteps * 2, 0, 100);
+        m_engine->setVolume(newVol);
+    }
+
+    event->accept();
+}
+
+void ViewfinderWidget::resetAutohideTimer()
+{
+    setHeaderAndDocksVisible(true);
+    setCursor(Qt::ArrowCursor);
+    if (m_videoSurface) {
+        m_videoSurface->setCursor(Qt::ArrowCursor);
+    }
+
+    bool isFs = isFullScreen() || (window() && window()->isFullScreen());
+    bool isPlaying = m_engine && m_engine->playbackState() == Core::PlaybackState::Playing;
+    if (isFs && isPlaying) {
+        m_autohideTimer.start(2500);
+    } else {
+        m_autohideTimer.stop();
+    }
+}
+
+void ViewfinderWidget::onAutohideTimeout()
+{
+    bool isFs = isFullScreen() || (window() && window()->isFullScreen());
+    bool isPlaying = m_engine && m_engine->playbackState() == Core::PlaybackState::Playing;
+    if (isFs && isPlaying) {
+        if ((m_dockWidget && m_dockWidget->underMouse()) ||
+            (m_headerWidget && m_headerWidget->underMouse()) ||
+            (m_scrubber && m_scrubber->underMouse())) {
+            m_autohideTimer.start(2500);
+            return;
+        }
+        setHeaderAndDocksVisible(false);
+        setCursor(Qt::BlankCursor);
+        if (m_videoSurface) {
+            m_videoSurface->setCursor(Qt::BlankCursor);
+        }
+    }
+}
+
+void ViewfinderWidget::setHeaderAndDocksVisible(bool visible)
+{
+    if (m_headerWidget) m_headerWidget->setVisible(visible);
+    if (m_dockWidget) m_dockWidget->setVisible(visible);
+    if (m_scrubber) m_scrubber->setVisible(visible);
 }
 
 void ViewfinderWidget::onEnginePositionChanged(qint64 posMs, const QString & /*smpte*/)

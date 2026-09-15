@@ -102,6 +102,76 @@ public:
         return m_backend && m_backend->initializeRenderContext(getProcAddress, ctx);
     }
 
+    // A-B Looping
+    void setLoopPointA() { if (m_backend) m_backend->setLoopPointA(); }
+    void setLoopPointB() { if (m_backend) m_backend->setLoopPointB(); }
+    void clearLoop() { if (m_backend) m_backend->clearLoop(); }
+    qint64 loopPointA() const { return m_backend ? m_backend->loopPointA() : -1; }
+    qint64 loopPointB() const { return m_backend ? m_backend->loopPointB() : -1; }
+    bool isLoopActive() const { return m_backend ? m_backend->isLoopActive() : false; }
+
+    // Delays
+    void setSubtitleDelayMs(int delayMs) { if (m_backend) m_backend->setSubtitleDelayMs(delayMs); }
+    void adjustSubtitleDelayMs(int deltaMs) { if (m_backend) m_backend->adjustSubtitleDelayMs(deltaMs); }
+    int subtitleDelayMs() const { return m_backend ? m_backend->subtitleDelayMs() : 0; }
+    void setAudioDelayMs(int delayMs) { if (m_backend) m_backend->setAudioDelayMs(delayMs); }
+    void adjustAudioDelayMs(int deltaMs) { if (m_backend) m_backend->adjustAudioDelayMs(deltaMs); }
+    int audioDelayMs() const { return m_backend ? m_backend->audioDelayMs() : 0; }
+
+    // Video Equalizer & Color Science
+    void setContrast(int val) { if (m_backend) m_backend->setContrast(val); }
+    void setBrightness(int val) { if (m_backend) m_backend->setBrightness(val); }
+    void setGamma(int val) { if (m_backend) m_backend->setGamma(val); }
+    void setSaturation(int val) { if (m_backend) m_backend->setSaturation(val); }
+    void setHue(int val) { if (m_backend) m_backend->setHue(val); }
+    void resetVideoEqualizer() { if (m_backend) m_backend->resetVideoEqualizer(); }
+
+    // Filters & Scaling
+    void setDebandEnabled(bool enabled) { if (m_backend) m_backend->setDebandEnabled(enabled); }
+    bool isDebandEnabled() const { return m_backend ? m_backend->isDebandEnabled() : false; }
+    void setSharpen(double val) { if (m_backend) m_backend->setSharpen(val); }
+    double sharpen() const { return m_backend ? m_backend->sharpen() : 0.0; }
+    void setAspectRatio(const QString &ratio) { if (m_backend) m_backend->setAspectRatio(ratio); }
+    QString aspectRatio() const { return m_backend ? m_backend->aspectRatio() : QString("auto"); }
+    void setVideoZoom(double zoom) { if (m_backend) m_backend->setVideoZoom(zoom); }
+    double videoZoom() const { return m_backend ? m_backend->videoZoom() : 0.0; }
+
+    // Night Mode & Audio Enhancements
+    void setNightMode(bool enabled) { if (m_backend) m_backend->setNightMode(enabled); }
+    bool isNightMode() const { return m_backend ? m_backend->isNightMode() : false; }
+    void setCrossfeedEnabled(bool enabled) { if (m_backend) m_backend->setCrossfeedEnabled(enabled); }
+    bool isCrossfeedEnabled() const { return m_backend ? m_backend->isCrossfeedEnabled() : false; }
+
+    // Chapters Navigation
+    void nextChapter() { if (m_backend) m_backend->nextChapter(); }
+    void previousChapter() { if (m_backend) m_backend->previousChapter(); }
+    int chapterCount() const { return m_backend ? m_backend->chapterCount() : 0; }
+    int currentChapter() const { return m_backend ? m_backend->currentChapter() : -1; }
+    QString currentChapterTitle() const { return m_backend ? m_backend->currentChapterTitle() : QString(); }
+
+    // Dual Subtitles & Language Learning
+    void selectSecondarySubtitleTrack(int trackId) { if (m_backend) m_backend->selectSecondarySubtitleTrack(trackId); }
+    int selectedSecondarySubtitleTrackId() const { return m_backend ? m_backend->selectedSecondarySubtitleTrackId() : -1; }
+    void cycleSecondarySubtitle() { if (m_backend) m_backend->cycleSecondarySubtitle(); }
+
+    // Pitch Shifting (Musical Semitones)
+    void setPitch(double semitones) { if (m_backend) m_backend->setPitch(semitones); }
+    double pitch() const { return m_backend ? m_backend->pitch() : 0.0; }
+    void adjustPitch(double deltaSemitones) { if (m_backend) m_backend->adjustPitch(deltaSemitones); }
+
+    // Bookmarks & Markers
+    void addBookmark(qint64 positionMs = -1, const QString &label = QString()) { if (m_backend) m_backend->addBookmark(positionMs, label); }
+    void removeBookmark(int index) { if (m_backend) m_backend->removeBookmark(index); }
+    void clearBookmarks() { if (m_backend) m_backend->clearBookmarks(); }
+    QList<qint64> bookmarks() const { return m_backend ? m_backend->bookmarks() : QList<qint64>(); }
+    void nextBookmark() { if (m_backend) m_backend->nextBookmark(); }
+    void previousBookmark() { if (m_backend) m_backend->previousBookmark(); }
+
+    // Forensic Screenshots
+    bool takeScreenshot(const QString &path = QString(), bool includeSubs = false) {
+        return m_backend && m_backend->takeScreenshot(path, includeSubs);
+    }
+
 signals:
     void playbackStateChanged(PlaybackState state);
     void positionChanged(qint64 positionMs, const QString &smpteTimecode);
