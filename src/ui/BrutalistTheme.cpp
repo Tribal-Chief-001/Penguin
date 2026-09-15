@@ -314,9 +314,10 @@ QString BrutalistTheme::accentOrangeButtonStyleSheet()
             background-color: #FF4400;
             color: #070709;
             border: 1px solid #FF4400;
-            border-radius: 4px;
-            padding: 5px 12px;
+            border-radius: 12px;
+            padding: 4px 14px;
             font-weight: bold;
+            font-size: 10px;
         }
         QPushButton:hover {
             background-color: #FF6622;
@@ -337,9 +338,10 @@ QString BrutalistTheme::accentLimeButtonStyleSheet()
             background-color: #CCFF00;
             color: #070709;
             border: 1px solid #CCFF00;
-            border-radius: 4px;
-            padding: 5px 12px;
+            border-radius: 12px;
+            padding: 4px 14px;
             font-weight: bold;
+            font-size: 10px;
         }
         QPushButton:hover {
             background-color: #DDFF33;
@@ -466,6 +468,32 @@ QString BrutalistTheme::videoEqualizerDialogStyleSheet()
             background-color: #0B0B0E;
             border: 1px solid #1E1E24;
             border-radius: 8px;
+        }
+        QLabel {
+            color: #E2E2EA;
+            font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+        }
+        QSlider::groove:horizontal {
+            height: 4px;
+            background: #14141E;
+            border: 1px solid #22222E;
+            border-radius: 2px;
+        }
+        QSlider::sub-page:horizontal {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #CCFF00, stop:1 #00E5FF);
+            border-radius: 2px;
+        }
+        QSlider::handle:horizontal {
+            background: #FFFFFF;
+            border: 1px solid #FFFFFF;
+            width: 12px;
+            margin-top: -4px;
+            margin-bottom: -4px;
+            border-radius: 6px;
+        }
+        QSlider::handle:horizontal:hover {
+            background: #00E5FF;
+            border: 1px solid #00E5FF;
         }
     )");
 }

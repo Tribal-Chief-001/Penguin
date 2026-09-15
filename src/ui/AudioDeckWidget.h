@@ -27,6 +27,40 @@ enum class RepeatMode {
     RepeatOne
 };
 
+class KineticDeckVisualizer : public QLabel {
+    Q_OBJECT
+
+public:
+    explicit KineticDeckVisualizer(QWidget *parent = nullptr);
+    virtual ~KineticDeckVisualizer() = default;
+
+    void setPlaybackState(Core::PlaybackState state);
+    void setAudioLevels(double lPeak, double rPeak, double lRms, double rRms);
+    void reset();
+
+signals:
+    void clicked();
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+
+private slots:
+    void onAnimationTick();
+
+private:
+    Core::PlaybackState m_state = Core::PlaybackState::Stopped;
+    double m_rotationAngle = 0.0;
+    double m_rotationSpeed = 0.0;
+    double m_leftPeakDb = -60.0;
+    double m_rightPeakDb = -60.0;
+    double m_leftRmsDb = -60.0;
+    double m_rightRmsDb = -60.0;
+    double m_smoothedEnergy = 0.0;
+    double m_pulsePhase = 0.0;
+    QTimer *m_animTimer = nullptr;
+};
+
 class AudioDeckWidget : public QWidget {
     Q_OBJECT
 
@@ -92,7 +126,7 @@ private:
     QLabel *m_artistLabel = nullptr;
     QLabel *m_albumLabel = nullptr;
     QLabel *m_formatBadge = nullptr;
-    QLabel *m_coverArtBox = nullptr;
+    KineticDeckVisualizer *m_coverArtBox = nullptr;
 
     // Racks & Viewports
     VUMeterWidget *m_vuMeter = nullptr;

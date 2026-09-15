@@ -486,7 +486,7 @@ void MainWindow::openVideoEqualizerDialog()
     auto *dlg = new QDialog(this);
     dlg->setWindowTitle("VIDEO EQUALIZER // COLOR SCIENCE");
     dlg->setFixedWidth(360);
-    dlg->setStyleSheet(BrutalistTheme::globalStyleSheet());
+    dlg->setStyleSheet(BrutalistTheme::videoEqualizerDialogStyleSheet());
 
     auto *layout = new QVBoxLayout(dlg);
     layout->setContentsMargins(16, 16, 16, 16);
@@ -533,6 +533,7 @@ void MainWindow::openVideoEqualizerDialog()
     auto *btnRow = new QHBoxLayout();
     auto *resetBtn = new QPushButton("FLAT RESET", dlg);
     resetBtn->setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
+    resetBtn->setStyleSheet(BrutalistTheme::pillButtonStyleSheet());
     connect(resetBtn, &QPushButton::clicked, dlg, [this, dlg]() {
         m_engine->resetVideoEqualizer();
         dlg->close();

@@ -237,17 +237,19 @@ void TickScrubberWidget::paintEvent(QPaintEvent * /*event*/)
     }
 
     // 7. Hover Indicator & Floating SMPTE Badge
-    if (m_isHovered && !m_isDragging && m_durationMs > 0 && m_hoverX >= tr.left() && m_hoverX <= tr.right()) {
-        int effectiveX = m_isMagneticSnapped && m_snappedChapterIndex >= 0
+    bool showBadge = (m_isHovered || m_isDragging) && m_durationMs > 0;
+    int badgeTargetX = m_isDragging ? playheadX : m_hoverX;
+    if (showBadge && badgeTargetX >= tr.left() && badgeTargetX <= tr.right()) {
+        int effectiveX = (m_isMagneticSnapped && m_snappedChapterIndex >= 0)
             ? positionMsToX(m_chapters[m_snappedChapterIndex].timestampMs)
-            : m_hoverX;
+            : badgeTargetX;
 
         p.setPen(QPen(QColor("#00E5FF"), 1, Qt::DashLine));
         p.drawLine(effectiveX, 4, effectiveX, height() - 4);
 
         // Floating hover badge
-        qint64 hoverMs = xToPositionMs(effectiveX);
-        QString badgeText = Core::TimecodeFormatter::formatTimecode(hoverMs, m_fps, m_dropFrame);
+        qint64 badgeMs = m_isDragging ? m_positionMs : xToPositionMs(effectiveX);
+        QString badgeText = Core::TimecodeFormatter::formatTimecode(badgeMs, m_fps, m_dropFrame);
         if (m_isMagneticSnapped && m_snappedChapterIndex >= 0 && m_snappedChapterIndex < m_chapters.size()) {
             badgeText += " • " + m_chapters[m_snappedChapterIndex].title;
         }
@@ -352,7 +354,8 @@ void TickScrubberWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && m_isDragging) {
         m_isDragging = false;
-        qint64 targetMs = xToPositionMs(event->pos().x());
+        qint64 rawMs = xToPositionMs(event->pos().x());
+        qint64 targetMs = applyMagneticSnap(event->pos().x(), rawMs);
         m_positionMs = targetMs;
         emit positionChanged(m_positionMs);
         emit seekRequested(targetMs);

@@ -496,6 +496,12 @@ void ViewfinderWidget::setupUI()
     m_volumeSlider->setValue(85);
     m_volumeSlider->setFixedWidth(80);
     m_volumeSlider->setFocusPolicy(Qt::NoFocus);
+    m_volumeSlider->setStyleSheet(
+        "QSlider::groove:horizontal { height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 2px; }"
+        "QSlider::sub-page:horizontal { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF4400, stop:1 #00E5FF); border-radius: 2px; }"
+        "QSlider::handle:horizontal { background: #FFFFFF; border: 1px solid #FFFFFF; width: 12px; margin-top: -4px; margin-bottom: -4px; border-radius: 6px; }"
+        "QSlider::handle:horizontal:hover { background: #00E5FF; border: 1px solid #00E5FF; }"
+    );
     connect(m_volumeSlider, &QSlider::valueChanged, this, &ViewfinderWidget::onVolumeSliderChanged);
     dockLayout->addWidget(m_volumeSlider);
 
@@ -547,7 +553,7 @@ void ViewfinderWidget::connectEngineSignals()
     });
     connect(m_engine, &Core::PlaybackEngine::muteChanged, this, [this](bool muted) {
         m_muteBtn->setText(muted ? "MUTE" : "VOL");
-        m_muteBtn->setStyleSheet(muted ? "background-color: #FF4400; color: #070709;" : BrutalistTheme::primaryButtonStyleSheet());
+        m_muteBtn->setStyleSheet(muted ? BrutalistTheme::accentOrangeButtonStyleSheet() : BrutalistTheme::pillButtonStyleSheet());
     });
     connect(m_engine, &Core::PlaybackEngine::speedChanged, this, [this](double spd) {
         QString spdStr = QString("%1x").arg(spd, 0, 'f', (std::round(spd * 10) == spd * 10 ? 1 : 2));

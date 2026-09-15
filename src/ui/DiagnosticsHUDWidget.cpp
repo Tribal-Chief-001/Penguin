@@ -108,20 +108,20 @@ void DiagnosticsHUDWidget::paintEvent(QPaintEvent * /*event*/)
     p.drawLine(bgRect.right() - 2 - blen, bgRect.bottom() - 2, bgRect.right() - 2, bgRect.bottom() - 2);
     p.drawLine(bgRect.right() - 2, bgRect.bottom() - 2 - blen, bgRect.right() - 2, bgRect.bottom() - 2);
 
-    // Glowing laser accent dot & line
+    // Glowing laser accent dot
     p.setPen(Qt::NoPen);
     p.setBrush(BrutalistTheme::ACCENT_TELEMETRY_CYAN);
-    p.drawEllipse(QPoint(bgRect.left() + 14, bgRect.top() + 14), 2, 2);
+    p.drawEllipse(QPoint(bgRect.left() + 14, 18 - 4), 2, 2);
 
     p.setFont(BrutalistTheme::monospaceFont(8, QFont::Bold));
 
     int lineHeight = 18;
     int curY = 18;
-    int marginX = 12;
+    int marginX = 14;
 
     // Header Tag
     p.setPen(BrutalistTheme::ACCENT_TELEMETRY_CYAN);
-    p.drawText(marginX, curY, "TELEMETRY OSD // HARDWARE DIAGNOSTICS");
+    p.drawText(marginX + 10, curY, "TELEMETRY OSD // HARDWARE DIAGNOSTICS");
     curY += lineHeight;
 
     p.setFont(BrutalistTheme::monospaceFont(8, QFont::Normal));

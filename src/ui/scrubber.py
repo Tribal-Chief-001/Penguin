@@ -254,7 +254,9 @@ class MechanicalTickScrubber:
 
     def handle_mouse_release(self, x: int, y: int) -> int:
         """Handles mouse button release."""
-        target_ms = self.x_to_position(x)
+        raw_ms = self.x_to_position(x)
+        target_ms, _ = self.apply_magnetic_snap(raw_ms)
+        self.position_ms = target_ms
         self._is_dragging = False
         if self._on_scrub_end:
             self._on_scrub_end()
