@@ -45,8 +45,9 @@ jobs:
       - name: Build C++ Test Suites
         run: |
           cd tests
-          qmake6 tests.pro || true
-          make -j$(nproc)
+          qmake6 test_m1.pro && make -j$(nproc)
+          qmake6 test_m2_ui.pro && make -j$(nproc)
+          qmake6 test_m3_m4.pro && make -j$(nproc)
           cd ..
 
       - name: Run Headless Self-Diagnostics
